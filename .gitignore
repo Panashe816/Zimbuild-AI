@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pth
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+build/
+.pytest_cache/
+.vscode/
+.idea/
+mlstructfp_source/
+dataset/
+*.log

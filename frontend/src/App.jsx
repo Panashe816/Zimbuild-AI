@@ -136,6 +136,18 @@ function App() {
   // Stores the successful Vision analysis shown before construction inputs.
   const [visionAnalysis, setVisionAnalysis] = useState(null);
 
+  // User-editable values for the detected visualisation.
+  // These are initialised from the Vision result and will be sent to the
+  // backend in the next integration step.
+  const [visionEdits, setVisionEdits] = useState({
+    floorArea: "",
+    walls: "",
+    rooms: "",
+    doors: "",
+    windows: "",
+    wallLength: "",
+  });
+
   const [selectedLocation, setSelectedLocation] =
     useState(LOCATION_OPTIONS[1]);
 
@@ -188,6 +200,15 @@ function App() {
     setMapAnalysisState("idle");
     setProcessedFilename("");
     setStoredFilename("");
+    setVisionAnalysis(null);
+    setVisionEdits({
+      floorArea: "",
+      walls: "",
+      rooms: "",
+      doors: "",
+      windows: "",
+      wallLength: "",
+    });
   };
 
   // -----------------------------------------------------------------------
@@ -302,6 +323,26 @@ function App() {
     }
 
     setVisionAnalysis(data.phase8);
+
+    const analysed = data.phase8 || {};
+    const analysedWalls = analysed.walls || {};
+    const analysedRooms = analysed.rooms || {};
+    const analysedDoors = analysed.doors || {};
+    const analysedWindows = analysed.windows || {};
+    const analysedFloor = analysed.floor || {};
+
+    setVisionEdits({
+      floorArea: String(
+        analysedFloor.recommended_floor_area_m2 ??
+          analysedFloor.printed_total_floor_area_m2 ??
+          0
+      ),
+      walls: String(analysedWalls.count ?? 0),
+      rooms: String(analysedRooms.count ?? 0),
+      doors: String(analysedDoors.count ?? 0),
+      windows: String(analysedWindows.count ?? 0),
+      wallLength: String(analysedWalls.total_wall_length_m ?? 0),
+    });
 
     return data;
   };
@@ -561,6 +602,14 @@ function App() {
 
     setResult(null);
     setVisionAnalysis(null);
+    setVisionEdits({
+      floorArea: "",
+      walls: "",
+      rooms: "",
+      doors: "",
+      windows: "",
+      wallLength: "",
+    });
     setErrorMessage("");
     setMapAnalysisState("idle");
   };
@@ -849,7 +898,7 @@ function App() {
         <div className="analysis-check">✓</div>
 
         <div>
-          <strong>AI visualisation complete</strong>
+          <strong>Visualisation complete</strong>
 
           <span>
             The architectural plan has been analysed successfully.
@@ -883,7 +932,7 @@ function App() {
       <section className="project-card details-card">
         <div className="card-header">
           <div>
-            <p className="eyebrow">AI visualisation result</p>
+            <p className="eyebrow">Visualisation result</p>
 
             <h3>What ZimBuild AI detected</h3>
 
@@ -907,46 +956,113 @@ function App() {
         <div className="results-grid">
           <div className="result-card">
             <p className="eyebrow">Floor area</p>
-            <strong>
-              {formatNumber(
-                floor.recommended_floor_area_m2 ??
-                  floor.printed_total_floor_area_m2 ??
-                  0
-              )} m²
-            </strong>
-            <span>recommended floor area</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={visionEdits.floorArea}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  floorArea: event.target.value,
+                }))
+              }
+              aria-label="Corrected floor area"
+            />
+            <span>recommended floor area (editable)</span>
           </div>
 
           <div className="result-card">
             <p className="eyebrow">Walls</p>
-            <strong>{walls.count ?? 0}</strong>
-            <span>detected wall segments</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={visionEdits.walls}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  walls: event.target.value,
+                }))
+              }
+              aria-label="Corrected wall count"
+            />
+            <span>detected wall segments (editable)</span>
           </div>
 
           <div className="result-card">
             <p className="eyebrow">Rooms</p>
-            <strong>{rooms.count ?? 0}</strong>
-            <span>detected rooms</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={visionEdits.rooms}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  rooms: event.target.value,
+                }))
+              }
+              aria-label="Corrected room count"
+            />
+            <span>detected rooms (editable)</span>
           </div>
 
           <div className="result-card">
             <p className="eyebrow">Doors</p>
-            <strong>{doors.count ?? 0}</strong>
-            <span>detected doors</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={visionEdits.doors}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  doors: event.target.value,
+                }))
+              }
+              aria-label="Corrected door count"
+            />
+            <span>detected doors (editable)</span>
           </div>
 
           <div className="result-card">
             <p className="eyebrow">Windows</p>
-            <strong>{windows.count ?? 0}</strong>
-            <span>detected windows</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={visionEdits.windows}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  windows: event.target.value,
+                }))
+              }
+              aria-label="Corrected window count"
+            />
+            <span>detected windows (editable)</span>
           </div>
 
           <div className="result-card">
             <p className="eyebrow">Wall length</p>
-            <strong>
-              {formatNumber(walls.total_wall_length_m ?? 0)} m
-            </strong>
-            <span>total detected wall length</span>
+            <div className="input-with-unit">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={visionEdits.wallLength}
+                onChange={(event) =>
+                  setVisionEdits((current) => ({
+                    ...current,
+                    wallLength: event.target.value,
+                  }))
+                }
+                aria-label="Corrected total wall length"
+              />
+              <span>m</span>
+            </div>
+            <span>total detected wall length (editable)</span>
           </div>
         </div>
 

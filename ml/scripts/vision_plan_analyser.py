@@ -11,9 +11,7 @@ from dotenv import load_dotenv
 # VISION-BASED ARCHITECTURAL PLAN ANALYSER
 # ============================================================
 
-PROJECT_ROOT = Path(
-    r"C:\Users\TMC CLIENT\Desktop\ZimBuild-AI"
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 IMAGE_PATH = Path(
     r"C:\Users\TMC CLIENT\Downloads\WhatsApp Image 2026-10-03 at 12.06.11.jpeg"

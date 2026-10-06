@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const API_BASE_URL = "https://zimbuild-ai.onrender.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,23 @@ const DEFAULTS = {
 
 function App() {
   const [step, setStep] = useState(1);
+
+  // -----------------------------------------------------------------------
+  // Google authentication
+  // -----------------------------------------------------------------------
+
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("zimbuild_auth_user");
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const googleButtonRef = useRef(null);
 
   // -----------------------------------------------------------------------
   // Project information
@@ -137,8 +155,8 @@ function App() {
   const [visionAnalysis, setVisionAnalysis] = useState(null);
 
   // User-editable values for the detected visualisation.
-  // These are initialised from the Vision result and will be sent to the
-  // backend in the next integration step.
+  // These are initialised from the Vision result and are sent to the
+  // backend when the estimate is generated.
   const [visionEdits, setVisionEdits] = useState({
     floorArea: "",
     walls: "",
@@ -150,6 +168,146 @@ function App() {
 
   const [selectedLocation, setSelectedLocation] =
     useState(LOCATION_OPTIONS[1]);
+
+  // -----------------------------------------------------------------------
+  // Load Google Identity Services
+  // -----------------------------------------------------------------------
+
+  useEffect(() => {
+    if (authUser || !GOOGLE_CLIENT_ID) {
+      return;
+    }
+
+    const existingScript = document.querySelector(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+
+    const initialiseGoogleSignIn = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) {
+        return;
+      }
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+      });
+
+      googleButtonRef.current.innerHTML = "";
+
+      window.google.accounts.id.renderButton(
+        googleButtonRef.current,
+        {
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          width: 320,
+          logo_alignment: "left",
+        }
+      );
+    };
+
+    if (existingScript) {
+      if (window.google?.accounts?.id) {
+        initialiseGoogleSignIn();
+      } else {
+        existingScript.addEventListener(
+          "load",
+          initialiseGoogleSignIn,
+          { once: true }
+        );
+      }
+
+      return () => {
+        existingScript.removeEventListener(
+          "load",
+          initialiseGoogleSignIn
+        );
+      };
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initialiseGoogleSignIn;
+    document.head.appendChild(script);
+
+    return () => {
+      script.onload = null;
+    };
+  }, [authUser]);
+
+  // -----------------------------------------------------------------------
+  // Verify Google credential with the backend
+  // -----------------------------------------------------------------------
+
+  const handleGoogleCredential = async (response) => {
+    if (!response?.credential) {
+      setAuthError("Google sign-in did not return a valid credential.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const authResponse = await fetch(
+        `${API_BASE_URL}/auth/google`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            credential: response.credential,
+          }),
+        }
+      );
+
+      const data = await authResponse.json();
+
+      if (!authResponse.ok) {
+        throw new Error(
+          data.detail || "Google sign-in could not be completed."
+        );
+      }
+
+      if (!data.user) {
+        throw new Error(
+          "The authentication server did not return a user profile."
+        );
+      }
+
+      localStorage.setItem(
+        "zimbuild_auth_user",
+        JSON.stringify(data.user)
+      );
+
+      if (data.token) {
+        localStorage.setItem(
+          "zimbuild_auth_token",
+          data.token
+        );
+      }
+
+      setAuthUser(data.user);
+    } catch (error) {
+      setAuthError(
+        error.message ||
+          "Unable to sign in with Google. Please try again."
+      );
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("zimbuild_auth_user");
+    localStorage.removeItem("zimbuild_auth_token");
+    setAuthUser(null);
+    setAuthError("");
+  };
 
   // -----------------------------------------------------------------------
   // Update selected location
@@ -655,9 +813,37 @@ function App() {
         </h2>
       </div>
 
-      <div className="system-status">
+      <div
+        className="system-status"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+        }}
+      >
         <span className="status-dot"></span>
         System ready
+
+        <span
+          style={{
+            color: "#475569",
+            fontSize: "13px",
+          }}
+        >
+          {authUser?.name || authUser?.email || "Signed in"}
+        </span>
+
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="secondary-button"
+          style={{
+            padding: "8px 12px",
+            fontSize: "12px",
+          }}
+        >
+          Sign out
+        </button>
       </div>
     </header>
   );
@@ -2086,6 +2272,117 @@ function App() {
   // -----------------------------------------------------------------------
   // Main render
   // -----------------------------------------------------------------------
+
+  if (!authUser) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          background: "#f6f8fb",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "440px",
+            padding: "40px",
+            background: "#ffffff",
+            borderRadius: "20px",
+            boxShadow: "0 18px 60px rgba(15, 23, 42, 0.12)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "56px",
+              height: "56px",
+              margin: "0 auto 18px",
+              borderRadius: "14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#111827",
+              color: "#ffffff",
+              fontSize: "24px",
+              fontWeight: 800,
+            }}
+          >
+            Z
+          </div>
+
+          <p className="eyebrow">Welcome to ZimBuild AI</p>
+
+          <h2 style={{ margin: "0 0 10px" }}>
+            Sign in to continue
+          </h2>
+
+          <p
+            style={{
+              margin: "0 auto 28px",
+              maxWidth: "340px",
+              color: "#64748b",
+              lineHeight: 1.6,
+            }}
+          >
+            Sign in with your Google account to access your
+            construction projects and estimates.
+          </p>
+
+          {!GOOGLE_CLIENT_ID ? (
+            <div className="error-message">
+              Google Sign-In is not configured on this deployment yet.
+            </div>
+          ) : (
+            <>
+              <div
+                ref={googleButtonRef}
+                style={{
+                  minHeight: "44px",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              />
+
+              {authLoading && (
+                <p
+                  style={{
+                    marginTop: "16px",
+                    color: "#64748b",
+                  }}
+                >
+                  Signing you in...
+                </p>
+              )}
+            </>
+          )}
+
+          {authError && (
+            <div
+              className="error-message"
+              style={{ marginTop: "16px" }}
+            >
+              {authError}
+            </div>
+          )}
+
+          <p
+            style={{
+              marginTop: "28px",
+              fontSize: "12px",
+              color: "#94a3b8",
+            }}
+          >
+            Secure authentication powered by Google.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">

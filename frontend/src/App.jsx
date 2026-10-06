@@ -954,11 +954,11 @@ function App() {
         </div>
 
         <div
-          className="results-grid"
-          style={{
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          }}
-        >
+        className="results-grid"
+        style={{
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        }}
+      >
           <div className="result-card">
             <p className="eyebrow">Floor area</p>
             <input
@@ -1069,7 +1069,6 @@ function App() {
             />
             <span>detected doors (editable)</span>
           </div>
-
         </div>
 
         <div className="analysis-summary-grid">

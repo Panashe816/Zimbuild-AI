@@ -5,6 +5,7 @@ from backend.api.health import router as health_router
 from backend.api.plans import router as plans_router
 from backend.api.estimation import router as estimation_router
 from backend.api.boq import router as boq_router
+from backend.api.auth import router as auth_router
 
 
 app = FastAPI(
@@ -36,6 +37,7 @@ app.include_router(health_router)
 app.include_router(plans_router)
 app.include_router(estimation_router)
 app.include_router(boq_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

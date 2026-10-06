@@ -953,7 +953,12 @@ function App() {
           </span>
         </div>
 
-        <div className="results-grid">
+        <div
+          className="results-grid"
+          style={{
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          }}
+        >
           <div className="result-card">
             <p className="eyebrow">Floor area</p>
             <input
@@ -1009,24 +1014,6 @@ function App() {
           </div>
 
           <div className="result-card">
-            <p className="eyebrow">Doors</p>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={visionEdits.doors}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  doors: event.target.value,
-                }))
-              }
-              aria-label="Corrected door count"
-            />
-            <span>detected doors (editable)</span>
-          </div>
-
-          <div className="result-card">
             <p className="eyebrow">Windows</p>
             <input
               type="number"
@@ -1064,6 +1051,25 @@ function App() {
             </div>
             <span>total detected wall length (editable)</span>
           </div>
+
+          <div className="result-card">
+            <p className="eyebrow">Doors</p>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={visionEdits.doors}
+              onChange={(event) =>
+                setVisionEdits((current) => ({
+                  ...current,
+                  doors: event.target.value,
+                }))
+              }
+              aria-label="Corrected door count"
+            />
+            <span>detected doors (editable)</span>
+          </div>
+
         </div>
 
         <div className="analysis-summary-grid">
@@ -1353,7 +1359,7 @@ function App() {
 
       <div className="notice-box">
         <strong>
-          AI visualisation complete
+          Visualisation complete
         </strong>
 
         <span>

@@ -292,6 +292,35 @@ total_wall_length_m
 G. Do not double-count shared walls.
 
 ============================================================
+WALL JSON FIELD REQUIREMENTS — MANDATORY
+============================================================
+
+For every object in external_walls and internal_walls,
+return these exact field names:
+
+{{
+  "wall_id": "W1",
+  "wall_type": "external",
+  "length_m": 5.25,
+  "thickness_m": 0.23,
+  "measurement_source": "printed",
+  "confidence": 0.95
+}}
+
+IMPORTANT:
+
+- Use length_m for the wall length in metres.
+- Use thickness_m for wall thickness in metres.
+- length_m must be a positive number when the length
+  is reliably measurable.
+- If the length cannot be reliably measured, return
+  null rather than inventing a measurement.
+- Keep the existing external_walls and internal_walls
+  arrays and the existing overall JSON structure.
+- Calculate the total wall lengths from the individual
+  wall segments without double-counting shared walls.
+
+============================================================
 OPENINGS
 ============================================================
 

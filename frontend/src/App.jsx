@@ -38,12 +38,12 @@ const LOCATION_OPTIONS = [
 ];
 
 const DEFAULTS = {
-  wallHeight: "2.7",
-  foundationWidth: "0.3",
-  foundationDepth: "0.4",
-  slabThickness: "0.3",
-  hardcoreDepth: "0.4",
-  wallThickness: "0.2",
+  wallHeight: "2.4",
+  foundationWidth: "0.2",
+  foundationDepth: "0.3",
+  slabThickness: "0.15",
+  hardcoreDepth: "0.15",
+  wallThickness: "0.15",
   wastagePercentage: "5",
   reinforcementRuns: "3",
   brickForceInterval: "4",

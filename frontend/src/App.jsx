@@ -2195,9 +2195,9 @@ function App() {
             </div>
           </div>
 
-          <div className="boq-total-row">
-            <span>Material subtotal</span>
-            <strong>{formatMoney(materialSubtotal)}</strong>
+          <div className="boq-total-row grand-total">
+            <span>Final estimated cost (including materials)</span>
+            <strong>{formatMoney(grandTotal)}</strong>
           </div>
 
           <div className="boq-total-row">
@@ -2208,26 +2208,6 @@ function App() {
           <div className="boq-total-row">
             <span>Transport</span>
             <strong>{formatMoney(transportTotal)}</strong>
-          </div>
-
-          <div className="boq-total-row">
-            <span>Base project cost</span>
-            <strong>
-              {formatMoney(phase12?.base_project_cost ?? phase11?.base_project_cost ?? 0)}
-            </strong>
-          </div>
-
-          <div className="boq-total-row">
-            <span>
-              Location adjustment ({
-                phase12?.location || phase11?.location?.name || selectedLocation.label
-              })
-            </span>
-          </div>
-
-          <div className="boq-total-row grand-total">
-            <span>Final estimated cost</span>
-            <strong>{formatMoney(grandTotal)}</strong>
           </div>
         </section>
 

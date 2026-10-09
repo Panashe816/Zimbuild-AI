@@ -22,7 +22,7 @@ IMAGE_PATH = Path(
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-MODEL = "openrouter/free"
+MODEL = "google/gemini-2.5-flash"
 
 # 100 = 1:100
 USER_SCALE_RATIO = 100

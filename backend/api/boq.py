@@ -1,5 +1,6 @@
 from io import BytesIO
 from typing import Any
+from xml.sax.saxutils import escape
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -10,7 +11,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy.orm import Session
 
-from backend.api.dependencies import get_admin_claims, get_current_user, get_token_claims
+from backend.api.dependencies import get_token_claims
 from backend.database import engine
 from backend.models import Estimate, Plan, User
 
@@ -83,9 +84,9 @@ def download_boq_pdf(
             Paragraph("ZimBuild AI", styles["Title"]),
             Paragraph("Bill of Quantities and Construction Cost Estimate", styles["Heading2"]),
             Spacer(1, 4 * mm),
-            Paragraph(f"<b>Project:</b> {project_name}", styles["Normal"]),
-            Paragraph(f"<b>Location:</b> {location}", styles["Normal"]),
-            Paragraph(f"<b>Plan file:</b> {plan.original_filename}", styles["Normal"]),
+            Paragraph(f"<b>Project:</b> {escape(project_name)}", styles["Normal"]),
+            Paragraph(f"<b>Location:</b> {escape(location)}", styles["Normal"]),
+            Paragraph(f"<b>Plan file:</b> {escape(plan.original_filename)}", styles["Normal"]),
             Paragraph(f"<b>Estimate reference:</b> {estimate.id}", styles["Normal"]),
             Spacer(1, 5 * mm),
             Paragraph("Priced bill of quantities", styles["Heading2"]),

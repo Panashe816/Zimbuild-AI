@@ -303,6 +303,14 @@ function App() {
   };
 
   const handleSignOut = () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to sign out?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     localStorage.removeItem("zimbuild_auth_user");
     localStorage.removeItem("zimbuild_auth_token");
     setAuthUser(null);

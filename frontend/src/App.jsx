@@ -827,8 +827,6 @@ function App() {
           gap: "14px",
         }}
       >
-        <span className="status-dot"></span>
-        System ready
 
         <span
           style={{

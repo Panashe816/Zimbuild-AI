@@ -8,6 +8,10 @@ from fastapi import APIRouter, HTTPException
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+
+from backend.database import engine
+from backend.models import User
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -113,6 +117,30 @@ def sign_in_with_google(payload: GoogleCredentialRequest):
         )
 
     email = email.strip().lower()
+    name = google_user.get("name") or email.split("@")[0]
+    picture = google_user.get("picture")
+
+    # Persist the verified Google account so plans can be associated with
+    # the correct user and history remains private to that account.
+    try:
+        with Session(engine) as db:
+            user = db.query(User).filter(User.google_id == subject).one_or_none()
+            if user is None:
+                user = db.query(User).filter(User.email == email).one_or_none()
+            if user is None:
+                user = User(google_id=subject, email=email, name=name, picture=picture)
+                db.add(user)
+            else:
+                user.google_id = subject
+                user.email = email
+                user.name = name
+                user.picture = picture
+            db.commit()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Your Google account could not be saved. Please try again.",
+        ) from exc
 
     token = create_access_token(
         user_id=subject,
@@ -126,8 +154,8 @@ def sign_in_with_google(payload: GoogleCredentialRequest):
         "user": {
             "id": subject,
             "email": email,
-            "name": google_user.get("name") or email.split("@")[0],
-            "picture": google_user.get("picture"),
+            "name": name,
+            "picture": picture,
             "email_verified": True,
             "role": "user",
         },

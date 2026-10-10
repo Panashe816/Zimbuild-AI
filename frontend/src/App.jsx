@@ -444,7 +444,15 @@ function App() {
       setUserProjectsError("This project has no saved estimate to reopen yet.");
       return;
     }
-    setResult(project.result);
+    setResult({
+      ...project.result,
+      database: {
+        ...(project.result.database || {}),
+        estimate_id: project.estimate_id,
+        plan_id: project.plan_id,
+        saved: true,
+      },
+    });
     setProjectName(project.project_name || "");
     setLocation(project.location || "");
     setStep(3);
@@ -479,6 +487,12 @@ function App() {
       setSelectedLocation(option);
     }
   }, [locationProfile]);
+
+  useEffect(() => {
+    if (authUser?.role === "admin") {
+      loadAdminDashboard();
+    }
+  }, [authUser?.role]);
 
   // -----------------------------------------------------------------------
   // Clean image preview URL

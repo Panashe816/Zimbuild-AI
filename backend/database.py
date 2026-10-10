@@ -1,4 +1,3 @@
-
 import os
 
 from sqlalchemy import create_engine, text
@@ -35,13 +34,21 @@ def get_database_engine() -> Engine:
     )
 
 
+engine = get_database_engine()
+
+
 def test_database_connection() -> bool:
     """Verify that PostgreSQL is reachable."""
-    engine = get_database_engine()
-
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
         return True
-    finally:
-        engine.dispose()
+    except Exception:
+        return False
+
+
+def create_database_tables() -> None:
+    """Create missing tables defined by the SQLAlchemy models."""
+    from backend.models import Base
+
+    Base.metadata.create_all(bind=engine)

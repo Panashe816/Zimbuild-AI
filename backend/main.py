@@ -9,6 +9,7 @@ from backend.api.plans import router as plans_router
 from backend.api.estimation import router as estimation_router
 from backend.api.boq import router as boq_router
 from backend.api.auth import router as auth_router
+from backend.api.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -49,6 +50,7 @@ app.include_router(plans_router)
 app.include_router(estimation_router)
 app.include_router(boq_router)
 app.include_router(auth_router)
+app.include_router(admin_router)
 
 
 @app.get("/")

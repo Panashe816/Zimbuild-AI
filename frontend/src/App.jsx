@@ -4,6 +4,11 @@ import "./App.css";
 const API_BASE_URL = "https://zimbuild-ai.onrender.com";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("zimbuild_auth_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 /*
 |--------------------------------------------------------------------------
 | ZimBuild AI - Frontend
@@ -77,6 +82,9 @@ function App() {
   const [adminDashboard, setAdminDashboard] = useState(null);
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(false);
   const [adminDashboardError, setAdminDashboardError] = useState("");
+  const [userProjects, setUserProjects] = useState([]);
+  const [userProjectsLoading, setUserProjectsLoading] = useState(false);
+  const [userProjectsError, setUserProjectsError] = useState("");
   const googleButtonRef = useRef(null);
 
   // -----------------------------------------------------------------------
@@ -385,6 +393,63 @@ function App() {
     }
   };
 
+  const loadUserProjects = async () => {
+    setUserProjectsLoading(true);
+    setUserProjectsError("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/plans/mine`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.detail || "Could not load your past projects.");
+      }
+      setUserProjects(Array.isArray(data.projects) ? data.projects : []);
+    } catch (error) {
+      setUserProjectsError(error.message || "Could not load your past projects.");
+    } finally {
+      setUserProjectsLoading(false);
+    }
+  };
+
+  const downloadBoqPdf = async (estimateId, projectName = "project") => {
+    if (!estimateId) {
+      setErrorMessage("A saved estimate is required before downloading a BoQ.");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/boq/${estimateId}/pdf`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || "The BoQ PDF could not be downloaded.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `ZimBuild_BoQ_${String(projectName).replace(/[^a-z0-9_-]/gi, "_")}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setErrorMessage(error.message || "The BoQ PDF could not be downloaded.");
+    }
+  };
+
+  const openPastProject = (project) => {
+    if (!project?.result) {
+      setUserProjectsError("This project has no saved estimate to reopen yet.");
+      return;
+    }
+    setResult(project.result);
+    setProjectName(project.project_name || "");
+    setLocation(project.location || "");
+    setStep(3);
+  };
+
   const handleSignOut = () => {
     setShowSignOutDialog(true);
   };
@@ -477,6 +542,7 @@ function App() {
       `${API_BASE_URL}/plans/upload`,
       {
         method: "POST",
+        headers: getAuthHeaders(),
         body: formData,
       }
     );
@@ -508,6 +574,7 @@ function App() {
       )}`,
       {
         method: "POST",
+        headers: getAuthHeaders(),
       }
     );
 
@@ -555,6 +622,7 @@ function App() {
       )}?${query.toString()}`,
       {
         method: "POST",
+        headers: getAuthHeaders(),
       }
     );
 
@@ -776,6 +844,7 @@ function App() {
         )}?${query.toString()}`,
         {
           method: "POST",
+          headers: getAuthHeaders(),
         }
       );
 
@@ -982,8 +1051,12 @@ function App() {
         </button>
 
         <button
-          className="nav-item"
+          className={`nav-item ${step === 4 ? "active" : ""}`}
           type="button"
+          onClick={() => {
+            setStep(4);
+            loadUserProjects();
+          }}
         >
           <span>▣</span>
           Projects
@@ -2060,6 +2133,53 @@ function App() {
   // Results - project summary and complete BoQ
   // -----------------------------------------------------------------------
 
+  const renderUserProjects = () => (
+    <section className="project-card">
+      <div className="card-header">
+        <div>
+          <p className="eyebrow">Project library</p>
+          <h3>Your past projects</h3>
+          <p className="card-subtitle">Your saved estimates are private to your account.</p>
+        </div>
+        <button type="button" className="secondary-button" onClick={loadUserProjects} disabled={userProjectsLoading}>
+          {userProjectsLoading ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+      {userProjectsError && <div className="error-message" role="alert">{userProjectsError}</div>}
+      {userProjectsLoading ? (
+        <p>Loading your saved projects…</p>
+      ) : userProjects.length === 0 ? (
+        <div className="notice-box"><strong>No saved projects yet</strong><span>When you complete an estimate, it will appear here.</span></div>
+      ) : (
+        <div className="table-wrapper">
+          <table>
+            <thead><tr><th>Project</th><th>Location</th><th>Status</th><th>Estimated cost</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              {userProjects.map((project) => (
+                <tr key={project.estimate_id || project.plan_id}>
+                  <td>{project.project_name}</td>
+                  <td>{project.location || "—"}</td>
+                  <td>{project.status}</td>
+                  <td>{project.total_cost == null ? "Not estimated" : `${project.currency || "USD"} ${Number(project.total_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+                  <td>{project.created_at ? new Date(project.created_at).toLocaleDateString() : "—"}</td>
+                  <td>
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {project.result && <button type="button" className="secondary-button" onClick={() => openPastProject(project)}>View</button>}
+                      {project.estimate_id && <button type="button" className="primary-button" onClick={() => downloadBoqPdf(project.estimate_id, project.project_name)}>Download PDF</button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <div className="form-actions">
+        <button type="button" className="primary-button" onClick={startNewProject}>+ New project</button>
+      </div>
+    </section>
+  );
+
   const renderResultsStep = () => {
     const phase8 = result?.phase8 || {};
     const phase9 = result?.phase9 || {};
@@ -2118,12 +2238,23 @@ function App() {
             </p>
           </div>
 
-          <button
-            className="secondary-button"
-            onClick={startNewProject}
-          >
-            + New project
-          </button>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {result?.database?.estimate_id && (
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => downloadBoqPdf(result.database.estimate_id, result?.project?.project_name || projectName)}
+              >
+                Download BoQ PDF
+              </button>
+            )}
+            <button
+              className="secondary-button"
+              onClick={startNewProject}
+            >
+              + New project
+            </button>
+          </div>
         </section>
 
         <section className="results-grid">
@@ -2633,14 +2764,30 @@ function App() {
           </div>
           <section style={{ marginTop: "24px", padding: "24px", borderRadius: "14px", border: "1px solid #e2e8f0", background: "#fff" }}>
             <h2 style={{ margin: "0 0 8px", fontSize: "18px" }}>Recent architectural plans</h2>
-            <p style={{ margin: "0 0 18px", color: "#64748b", fontSize: "13px", lineHeight: 1.6 }}>Plan history will appear here once the backend history endpoint is connected.</p>
+            <p style={{ margin: "0 0 18px", color: "#64748b", fontSize: "13px", lineHeight: 1.6 }}>Recent plans and estimates across all accounts.</p>
             {adminDashboardError && <div className="error-message" role="alert">{adminDashboardError}</div>}
             {adminDashboardLoading && <p style={{ color: "#64748b", fontSize: "13px" }}>Loading administrator records…</p>}
-            {!adminDashboardLoading && !adminDashboardError && (
-              <div style={{ padding: "30px 18px", textAlign: "center", borderRadius: "10px", border: "1px dashed #cbd5e1", background: "#f8fafc" }}>
-                <div style={{ fontSize: "26px" }}>▤</div>
-                <div style={{ marginTop: "8px", fontSize: "14px", fontWeight: 700 }}>No dashboard records loaded</div>
-                <div style={{ marginTop: "6px", color: "#64748b", fontSize: "12px" }}>Connect the protected admin dashboard API to display saved plans and estimates.</div>
+            {!adminDashboardLoading && !adminDashboardError && (adminDashboard?.recent_projects || []).length === 0 && (
+              <div style={{ padding: "30px 18px", textAlign: "center", borderRadius: "10px", border: "1px dashed #cbd5e1", background: "#f8fafc" }}>No plans have been recorded yet.</div>
+            )}
+            {!adminDashboardLoading && !adminDashboardError && (adminDashboard?.recent_projects || []).length > 0 && (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                  <thead><tr>{["Project", "Location", "User", "Status", "Estimate", "Created", "BoQ"].map((label) => <th key={label} style={{ padding: "12px 10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b", whiteSpace: "nowrap" }}>{label}</th>)}</tr></thead>
+                  <tbody>
+                    {adminDashboard.recent_projects.map((project) => (
+                      <tr key={project.estimate_id || project.plan_id}>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9" }}>{project.project_name}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9" }}>{project.location}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9" }}>{project.user_email}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9" }}>{project.status}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.total_cost == null ? "—" : `${project.currency || "USD"} ${Number(project.total_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.created_at ? new Date(project.created_at).toLocaleDateString() : "—"}</td>
+                        <td style={{ padding: "12px 10px", borderBottom: "1px solid #f1f5f9" }}>{project.estimate_id ? <button type="button" onClick={() => downloadBoqPdf(project.estimate_id, project.project_name)} style={{ padding: "7px 9px", border: "1px solid #bfdbfe", borderRadius: "7px", background: "#eff6ff", color: "#1d4ed8", cursor: "pointer", whiteSpace: "nowrap" }}>PDF</button> : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
@@ -2672,6 +2819,9 @@ function App() {
 
         {step === 3 &&
           renderResultsStep()}
+
+        {step === 4 &&
+          renderUserProjects()}
       </main>
 
       {showSignOutDialog && (

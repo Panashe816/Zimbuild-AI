@@ -1,11 +1,12 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from backend.api.dependencies import get_current_user
 from backend.database import engine
-from backend.models import Plan
+from backend.models import Estimate, Plan, User
 
 
 # ============================================================
@@ -73,6 +74,7 @@ def plans_info():
 @router.post("/upload")
 async def upload_plan(
     file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload an architectural floor plan.
@@ -140,6 +142,7 @@ async def upload_plan(
             plan_record = Plan(
                 original_filename=original_filename,
                 stored_filename=stored_filename,
+                user_id=current_user.id,
                 status="uploaded",
             )
             db.add(plan_record)
@@ -177,6 +180,7 @@ async def upload_plan(
 @router.post("/preprocess/{stored_filename}")
 def preprocess_uploaded_plan(
     stored_filename: str,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Prepare an uploaded architectural plan for the new
@@ -202,6 +206,11 @@ def preprocess_uploaded_plan(
         )
 
     source_path = UPLOAD_DIR / filename
+
+    with Session(engine) as db:
+        plan_record = db.query(Plan).filter(Plan.stored_filename == filename).one_or_none()
+        if plan_record is None or plan_record.user_id != current_user.id:
+            raise HTTPException(status_code=404, detail="Uploaded plan was not found.")
 
     if not source_path.exists():
         raise HTTPException(
@@ -251,3 +260,38 @@ def preprocess_uploaded_plan(
             "AI Visualiser pipeline."
         ),
     }
+
+
+@router.get("/mine")
+def get_my_projects(current_user: User = Depends(get_current_user)):
+    """Return only the signed-in user's saved projects and latest estimates."""
+    with Session(engine) as db:
+        plans = (
+            db.query(Plan)
+            .filter(Plan.user_id == current_user.id)
+            .order_by(Plan.created_at.desc())
+            .all()
+        )
+        projects = []
+        for plan in plans:
+            estimate = (
+                db.query(Estimate)
+                .filter(Estimate.plan_id == plan.id)
+                .order_by(Estimate.created_at.desc())
+                .first()
+            )
+            result = estimate.results if estimate and isinstance(estimate.results, dict) else {}
+            project = result.get("project") or {}
+            totals = result.get("totals") or {}
+            projects.append({
+                "plan_id": plan.id,
+                "estimate_id": estimate.id if estimate else None,
+                "project_name": project.get("project_name") or plan.original_filename,
+                "location": project.get("location") or "—",
+                "original_filename": plan.original_filename,
+                "status": plan.status,
+                "total_cost": estimate.total_cost if estimate and estimate.total_cost is not None else totals.get("grand_total"),
+                "currency": estimate.currency if estimate else project.get("currency", "USD"),
+                "created_at": (estimate.created_at if estimate else plan.created_at).isoformat(),
+            })
+        return {"projects": projects}

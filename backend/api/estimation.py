@@ -33,6 +33,10 @@ from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from backend.database import engine
+from backend.models import Estimate, Plan
 
 from backend.services.construction_parameters_service import extract_plan_data
 from backend.services.building_quantity_service import calculate_building_quantities
@@ -1165,4 +1169,56 @@ def full_estimation(
         started_at,
     )
 
-    return _json_safe(response)
+    safe_response = _json_safe(response)
+
+    # Save the completed BoQ/cost result in PostgreSQL and associate it
+    # with the uploaded plan record using the stable stored filename.
+    try:
+        with Session(engine) as db:
+            plan_record = (
+                db.query(Plan)
+                .filter(Plan.stored_filename == processed_filename)
+                .one_or_none()
+            )
+
+            # Keep older uploads usable if they predate database tracking.
+            if plan_record is None:
+                plan_record = Plan(
+                    original_filename=processed_filename,
+                    stored_filename=processed_filename,
+                    status="estimated",
+                )
+                db.add(plan_record)
+                db.flush()
+
+            estimate_record = Estimate(
+                plan_id=plan_record.id,
+                total_cost=float(final_project_cost),
+                currency=currency,
+                results=safe_response,
+            )
+            db.add(estimate_record)
+            plan_record.status = "estimated"
+            db.commit()
+            db.refresh(estimate_record)
+
+            safe_response["database"] = {
+                "saved": True,
+                "plan_id": plan_record.id,
+                "estimate_id": estimate_record.id,
+            }
+
+    except Exception as exc:
+        _debug_log(
+            f"FAILED TO SAVE ESTIMATION TO POSTGRESQL: {exc}",
+            started_at,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "The estimation was calculated, but the result could not "
+                "be saved to PostgreSQL."
+            ),
+        ) from exc
+
+    return safe_response

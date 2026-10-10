@@ -71,6 +71,12 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [adminLoginOpen, setAdminLoginOpen] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("zimbuildadmin@gmail.com");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminDashboard, setAdminDashboard] = useState(null);
+  const [adminDashboardLoading, setAdminDashboardLoading] = useState(false);
+  const [adminDashboardError, setAdminDashboardError] = useState("");
   const googleButtonRef = useRef(null);
 
   // -----------------------------------------------------------------------
@@ -175,7 +181,7 @@ function App() {
   // -----------------------------------------------------------------------
 
   useEffect(() => {
-    if (authUser || !GOOGLE_CLIENT_ID) {
+    if (authUser || !GOOGLE_CLIENT_ID || adminLoginOpen) {
       return;
     }
 
@@ -237,7 +243,7 @@ function App() {
     return () => {
       script.onload = null;
     };
-  }, [authUser]);
+  }, [authUser, adminLoginOpen]);
 
   // -----------------------------------------------------------------------
   // Verify Google credential with the backend
@@ -303,6 +309,82 @@ function App() {
     }
   };
 
+  const handleAdminLogin = async (event) => {
+    event.preventDefault();
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: adminEmail.trim().toLowerCase(),
+          password: adminPassword,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            (response.status === 404
+              ? "Administrator sign-in is not connected yet. The secure admin endpoint must be added to the backend first."
+              : "Administrator sign-in failed. Check your details and try again.")
+        );
+      }
+
+      if (!data.user || data.user.role !== "admin" || !data.token) {
+        throw new Error(
+          "The server did not return a verified administrator session."
+        );
+      }
+
+      localStorage.setItem("zimbuild_auth_user", JSON.stringify(data.user));
+      localStorage.setItem("zimbuild_auth_token", data.token);
+      setAuthUser(data.user);
+      setAdminPassword("");
+      setAdminLoginOpen(false);
+    } catch (error) {
+      setAuthError(
+        error.message || "Unable to sign in as administrator."
+      );
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const loadAdminDashboard = async () => {
+    setAdminDashboardLoading(true);
+    setAdminDashboardError("");
+
+    try {
+      const token = localStorage.getItem("zimbuild_auth_token");
+      const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            (response.status === 404
+              ? "The administrator dashboard API has not been added to the backend yet."
+              : "Could not load administrator dashboard data.")
+        );
+      }
+
+      setAdminDashboard(data);
+    } catch (error) {
+      setAdminDashboardError(
+        error.message || "Could not load administrator dashboard data."
+      );
+    } finally {
+      setAdminDashboardLoading(false);
+    }
+  };
+
   const handleSignOut = () => {
     setShowSignOutDialog(true);
   };
@@ -312,6 +394,10 @@ function App() {
     localStorage.removeItem("zimbuild_auth_token");
     setAuthUser(null);
     setAuthError("");
+    setAdminPassword("");
+    setAdminLoginOpen(false);
+    setAdminDashboard(null);
+    setAdminDashboardError("");
     setShowSignOutDialog(false);
   };
 
@@ -2258,112 +2344,315 @@ function App() {
   // -----------------------------------------------------------------------
 
   if (!authUser) {
+    const loginPrimaryButton = {
+      width: "100%",
+      minHeight: "48px",
+      borderRadius: "10px",
+      border: "1px solid #cbd5e1",
+      background: "#ffffff",
+      color: "#0f172a",
+      fontSize: "14px",
+      fontWeight: 650,
+      cursor: authLoading ? "wait" : "pointer",
+      opacity: authLoading ? 0.7 : 1,
+    };
+
     return (
       <div
+        className="zimbuild-login-layout"
         style={{
           minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "24px",
-          background: "#f6f8fb",
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1.08fr) minmax(360px, 0.92fr)",
+          background: "#f8fafc",
+          fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
-        <div
+        <section
+          className="zimbuild-login-brand-panel"
           style={{
-            width: "100%",
-            maxWidth: "440px",
-            padding: "40px",
-            background: "#ffffff",
-            borderRadius: "20px",
-            boxShadow: "0 18px 60px rgba(15, 23, 42, 0.12)",
-            textAlign: "center",
+            position: "relative",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            minHeight: "100vh",
+            padding: "clamp(28px, 5vw, 68px)",
+            color: "#ffffff",
+            background: "radial-gradient(circle at 78% 22%, rgba(59,130,246,0.45), transparent 28%), radial-gradient(circle at 16% 84%, rgba(14,165,233,0.2), transparent 30%), linear-gradient(145deg, #07152e 0%, #0b2b63 52%, #1749a6 100%)",
           }}
         >
           <div
+            aria-hidden="true"
             style={{
-              width: "56px",
-              height: "56px",
-              margin: "0 auto 18px",
-              borderRadius: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "#111827",
-              color: "#ffffff",
-              fontSize: "24px",
-              fontWeight: 800,
+              position: "absolute",
+              inset: 0,
+              opacity: 0.14,
+              pointerEvents: "none",
+              backgroundImage: "linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px)",
+              backgroundSize: "42px 42px",
+              maskImage: "linear-gradient(to bottom, black, transparent 88%)",
             }}
-          >
-            Z
+          />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <div
+                aria-label="ZimBuild AI architectural logo"
+                style={{
+                  width: "54px",
+                  height: "54px",
+                  display: "grid",
+                  placeItems: "center",
+                  flexShrink: 0,
+                  borderRadius: "16px",
+                  background: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.28)",
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.18)",
+                }}
+              >
+                <svg width="38" height="38" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                  <path d="M7 21.5 24 7l17 14.5v18H7v-18Z" stroke="white" strokeWidth="2.6" strokeLinejoin="round"/>
+                  <path d="M16 39V25h16v14M16 25l8-7 8 7M24 25v14" stroke="#93C5FD" strokeWidth="2.4" strokeLinejoin="round"/>
+                  <path d="M12 15.5V10h6" stroke="#60A5FA" strokeWidth="2.4" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: "21px", fontWeight: 800, letterSpacing: "-0.5px" }}>ZimBuild AI</div>
+                <div style={{ marginTop: "3px", fontSize: "12px", color: "#bfdbfe", letterSpacing: "0.3px" }}>CONSTRUCTION INTELLIGENCE</div>
+              </div>
+            </div>
           </div>
 
-          <p className="eyebrow">Welcome to ZimBuild AI</p>
-
-          <h2 style={{ margin: "0 0 10px" }}>
-            Sign in to continue
-          </h2>
-
-          <p
-            style={{
-              margin: "0 auto 28px",
-              maxWidth: "340px",
-              color: "#64748b",
-              lineHeight: 1.6,
-            }}
-          >
-            Sign in with your Google account to access your
-            construction projects and estimates.
-          </p>
-
-          {!GOOGLE_CLIENT_ID ? (
-            <div className="error-message">
-              Google Sign-In is not configured on this deployment yet.
-            </div>
-          ) : (
-            <>
-              <div
-                ref={googleButtonRef}
-                style={{
-                  minHeight: "44px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              />
-
-              {authLoading && (
-                <p
-                  style={{
-                    marginTop: "16px",
-                    color: "#64748b",
-                  }}
-                >
-                  Signing you in...
-                </p>
-              )}
-            </>
-          )}
-
-          {authError && (
+          <div style={{ position: "relative", zIndex: 1, maxWidth: "660px", padding: "64px 0" }}>
             <div
-              className="error-message"
-              style={{ marginTop: "16px" }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 12px",
+                borderRadius: "999px",
+                border: "1px solid rgba(191,219,254,0.3)",
+                background: "rgba(30,64,175,0.28)",
+                color: "#dbeafe",
+                fontSize: "11px",
+                fontWeight: 750,
+                letterSpacing: "1.5px",
+              }}
             >
-              {authError}
+              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#60a5fa" }} />
+              AI-POWERED CONSTRUCTION ESTIMATION
             </div>
-          )}
+            <h1 style={{ margin: "28px 0 18px", maxWidth: "650px", fontSize: "clamp(38px, 4.5vw, 66px)", lineHeight: 1.04, letterSpacing: "-2.5px", fontWeight: 820 }}>
+              Build smarter.
+              <br />
+              <span style={{ color: "#93c5fd" }}>Estimate with</span>
+              <br />
+              confidence.
+            </h1>
+            <p style={{ maxWidth: "520px", margin: 0, color: "#dbeafe", fontSize: "16px", lineHeight: 1.8 }}>
+              Turn residential architectural plans into structured quantities, material costs and bills of quantities — with a workflow designed for construction in Zimbabwe.
+            </p>
 
-          <p
-            style={{
-              marginTop: "28px",
-              fontSize: "12px",
-              color: "#94a3b8",
-            }}
-          >
-            Secure authentication powered by Google.
-          </p>
-        </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "12px", marginTop: "36px", maxWidth: "570px" }}>
+              {[
+                ["01", "Plan analysis"],
+                ["02", "Material quantities"],
+                ["03", "Cost estimates"],
+              ].map(([number, label]) => (
+                <div key={number} style={{ padding: "15px 14px", borderRadius: "12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(191,219,254,0.18)" }}>
+                  <div style={{ fontSize: "11px", fontWeight: 800, color: "#93c5fd", letterSpacing: "1px" }}>{number}</div>
+                  <div style={{ marginTop: "7px", fontSize: "12px", fontWeight: 650, color: "#ffffff" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", gap: "18px", flexWrap: "wrap", color: "#bfdbfe", fontSize: "11px" }}>
+            <span>© {new Date().getFullYear()} ZimBuild AI</span>
+            <span>Residential construction intelligence</span>
+          </div>
+        </section>
+
+        <section
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "clamp(24px, 5vw, 64px)",
+            background: "linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%)",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: "430px" }}>
+            <div style={{ marginBottom: "30px" }}>
+              <p style={{ margin: "0 0 10px", color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.7px", textTransform: "uppercase" }}>
+                {adminLoginOpen ? "Secure administrator access" : "Welcome to ZimBuild AI"}
+              </p>
+              <h2 style={{ margin: 0, color: "#0f172a", fontSize: "clamp(28px, 3vw, 36px)", lineHeight: 1.15, letterSpacing: "-1px", fontWeight: 800 }}>
+                {adminLoginOpen ? "Administrator login" : "Sign in to continue"}
+              </h2>
+              <p style={{ margin: "13px 0 0", color: "#64748b", fontSize: "14px", lineHeight: 1.75 }}>
+                {adminLoginOpen
+                  ? "Sign in with your administrator credentials to manage ZimBuild AI."
+                  : "Access your construction projects, architectural plans and estimates."}
+              </p>
+            </div>
+
+            <div style={{ padding: "clamp(22px, 3vw, 32px)", borderRadius: "20px", background: "#ffffff", border: "1px solid #e2e8f0", boxShadow: "0 20px 55px rgba(15,23,42,0.08)" }}>
+              {adminLoginOpen ? (
+                <form onSubmit={handleAdminLogin}>
+                  <label htmlFor="admin-email" style={{ display: "block", marginBottom: "8px", color: "#334155", fontSize: "12px", fontWeight: 700 }}>Administrator email</label>
+                  <input
+                    id="admin-email"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    value={adminEmail}
+                    onChange={(event) => setAdminEmail(event.target.value)}
+                    placeholder="admin@example.com"
+                    style={{ boxSizing: "border-box", width: "100%", height: "48px", marginBottom: "18px", padding: "0 13px", border: "1px solid #cbd5e1", borderRadius: "10px", outlineColor: "#2563eb", fontSize: "14px", color: "#0f172a", background: "#fff" }}
+                  />
+                  <label htmlFor="admin-password" style={{ display: "block", marginBottom: "8px", color: "#334155", fontSize: "12px", fontWeight: 700 }}>Password</label>
+                  <input
+                    id="admin-password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={adminPassword}
+                    onChange={(event) => setAdminPassword(event.target.value)}
+                    placeholder="Enter administrator password"
+                    style={{ boxSizing: "border-box", width: "100%", height: "48px", marginBottom: "18px", padding: "0 13px", border: "1px solid #cbd5e1", borderRadius: "10px", outlineColor: "#2563eb", fontSize: "14px", color: "#0f172a", background: "#fff" }}
+                  />
+                  <button type="submit" disabled={authLoading} style={{ ...loginPrimaryButton, border: "1px solid #1d4ed8", background: "linear-gradient(135deg, #2563eb, #1d4ed8)", color: "#ffffff", boxShadow: "0 8px 18px rgba(37,99,235,0.22)" }}>
+                    {authLoading ? "Verifying administrator…" : "Sign in as administrator"}
+                  </button>
+                  <button type="button" onClick={() => { setAdminLoginOpen(false); setAdminPassword(""); setAuthError(""); }} style={{ ...loginPrimaryButton, marginTop: "12px", background: "#f8fafc" }}>
+                    Back to Google sign-in
+                  </button>
+                </form>
+              ) : (
+                <>
+                  {!GOOGLE_CLIENT_ID ? (
+                    <div className="error-message">Google Sign-In is not configured on this deployment yet.</div>
+                  ) : (
+                    <>
+                      <div ref={googleButtonRef} style={{ minHeight: "48px", display: "flex", justifyContent: "center", alignItems: "center" }} />
+                      {authLoading && <p style={{ margin: "14px 0 0", textAlign: "center", color: "#64748b", fontSize: "13px" }}>Signing you in securely…</p>}
+                    </>
+                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "25px 0 20px", color: "#94a3b8", fontSize: "11px" }}>
+                    <span style={{ height: "1px", flex: 1, background: "#e2e8f0" }} />
+                    <span>ADMINISTRATOR ACCESS</span>
+                    <span style={{ height: "1px", flex: 1, background: "#e2e8f0" }} />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => { setAdminLoginOpen(true); setAuthError(""); }}
+                    style={{ ...loginPrimaryButton, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", background: "#f8fafc" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 3 5 6v5c0 4.5 2.9 8 7 10 4.1-2 7-5.5 7-10V6l-7-3Z" stroke="#1d4ed8" strokeWidth="1.8" strokeLinejoin="round"/>
+                      <path d="m9 12 2 2 4-4" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Administrator login
+                  </button>
+                </>
+              )}
+
+              {authError && (
+                <div className="error-message" role="alert" style={{ marginTop: "16px" }}>
+                  {authError}
+                </div>
+              )}
+
+              <p style={{ margin: "22px 0 0", color: "#94a3b8", fontSize: "11px", lineHeight: 1.6, textAlign: "center" }}>
+                {adminLoginOpen
+                  ? "Administrator access is verified by the secure ZimBuild AI server."
+                  : "Secure authentication powered by Google."}
+              </p>
+            </div>
+
+            <p style={{ margin: "22px 0 0", color: "#94a3b8", fontSize: "11px", lineHeight: 1.6, textAlign: "center" }}>
+              By continuing, you agree to use ZimBuild AI responsibly for construction planning and estimation.
+            </p>
+          </div>
+        </section>
+
+        <style>{`
+          @media (max-width: 850px) {
+            .zimbuild-login-layout { grid-template-columns: 1fr !important; }
+            .zimbuild-login-brand-panel { min-height: auto !important; }
+          }
+          @media (max-width: 520px) {
+            .zimbuild-login-layout { display: block !important; }
+            .zimbuild-login-brand-panel { padding: 28px 24px !important; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (authUser?.role === "admin") {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", background: "#f1f5f9", color: "#0f172a", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
+        <aside style={{ width: "250px", flexShrink: 0, display: "flex", flexDirection: "column", padding: "26px 18px", color: "#fff", background: "#0f172a" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "0 8px 30px" }}>
+            <div style={{ width: "42px", height: "42px", display: "grid", placeItems: "center", borderRadius: "12px", background: "#2563eb" }}>
+              <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M7 21.5 24 7l17 14.5v18H7v-18Z" stroke="white" strokeWidth="2.6" strokeLinejoin="round"/><path d="M16 39V25h16v14M16 25l8-7 8 7M24 25v14" stroke="#bfdbfe" strokeWidth="2.4" strokeLinejoin="round"/></svg>
+            </div>
+            <div><div style={{ fontSize: "16px", fontWeight: 800 }}>ZimBuild AI</div><div style={{ marginTop: "3px", color: "#94a3b8", fontSize: "10px" }}>ADMIN CONSOLE</div></div>
+          </div>
+          <div style={{ padding: "0 10px", color: "#94a3b8", fontSize: "10px", fontWeight: 800, letterSpacing: "1.4px" }}>MANAGEMENT</div>
+          <div style={{ marginTop: "14px", padding: "13px 12px", borderRadius: "10px", background: "#1d4ed8", fontSize: "13px", fontWeight: 700 }}>▦ &nbsp; Overview</div>
+          <div style={{ marginTop: "8px", padding: "13px 12px", borderRadius: "10px", color: "#cbd5e1", fontSize: "13px" }}>▤ &nbsp; Past plans</div>
+          <div style={{ marginTop: "8px", padding: "13px 12px", borderRadius: "10px", color: "#cbd5e1", fontSize: "13px" }}>♙ &nbsp; Users</div>
+          <div style={{ flex: 1 }} />
+          <div style={{ padding: "14px 10px", borderTop: "1px solid #334155", color: "#cbd5e1", fontSize: "12px", overflowWrap: "anywhere" }}>{authUser.email}</div>
+          <button type="button" onClick={handleSignOut} style={{ marginTop: "10px", minHeight: "42px", borderRadius: "9px", border: "1px solid #475569", background: "transparent", color: "#fff", fontWeight: 650, cursor: "pointer" }}>Sign out</button>
+        </aside>
+        <main style={{ flex: 1, minWidth: 0, padding: "clamp(24px, 4vw, 48px)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "20px", flexWrap: "wrap", paddingBottom: "24px", borderBottom: "1px solid #dbe3ed" }}>
+            <div><p style={{ margin: "0 0 8px", color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.4px" }}>ADMINISTRATOR DASHBOARD</p><h1 style={{ margin: 0, fontSize: "clamp(26px, 3vw, 34px)", letterSpacing: "-1px" }}>Welcome back</h1><p style={{ margin: "10px 0 0", color: "#64748b", fontSize: "14px" }}>Manage architectural plan activity and estimation records.</p></div>
+            <button type="button" onClick={loadAdminDashboard} disabled={adminDashboardLoading} style={{ padding: "11px 16px", border: "1px solid #1d4ed8", borderRadius: "9px", background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>{adminDashboardLoading ? "Refreshing…" : "Refresh dashboard"}</button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "16px", marginTop: "28px" }}>
+            {[
+              ["Past plans", adminDashboard?.total_plans ?? "—", "Uploaded architectural plans"],
+              ["Estimates", adminDashboard?.total_estimates ?? "—", "Generated cost estimates"],
+              ["Registered users", adminDashboard?.total_users ?? "—", "Accounts using ZimBuild AI"],
+            ].map(([label, value, detail]) => (
+              <div key={label} style={{ padding: "22px", borderRadius: "14px", border: "1px solid #e2e8f0", background: "#fff", boxShadow: "0 4px 14px rgba(15,23,42,.03)" }}>
+                <div style={{ color: "#64748b", fontSize: "12px", fontWeight: 650 }}>{label}</div>
+                <div style={{ marginTop: "12px", color: "#0f172a", fontSize: "30px", fontWeight: 800 }}>{value}</div>
+                <div style={{ marginTop: "7px", color: "#94a3b8", fontSize: "11px" }}>{detail}</div>
+              </div>
+            ))}
+          </div>
+          <section style={{ marginTop: "24px", padding: "24px", borderRadius: "14px", border: "1px solid #e2e8f0", background: "#fff" }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: "18px" }}>Recent architectural plans</h2>
+            <p style={{ margin: "0 0 18px", color: "#64748b", fontSize: "13px", lineHeight: 1.6 }}>Plan history will appear here once the backend history endpoint is connected.</p>
+            {adminDashboardError && <div className="error-message" role="alert">{adminDashboardError}</div>}
+            {adminDashboardLoading && <p style={{ color: "#64748b", fontSize: "13px" }}>Loading administrator records…</p>}
+            {!adminDashboardLoading && !adminDashboardError && (
+              <div style={{ padding: "30px 18px", textAlign: "center", borderRadius: "10px", border: "1px dashed #cbd5e1", background: "#f8fafc" }}>
+                <div style={{ fontSize: "26px" }}>▤</div>
+                <div style={{ marginTop: "8px", fontSize: "14px", fontWeight: 700 }}>No dashboard records loaded</div>
+                <div style={{ marginTop: "6px", color: "#64748b", fontSize: "12px" }}>Connect the protected admin dashboard API to display saved plans and estimates.</div>
+              </div>
+            )}
+          </section>
+        </main>
+        {showSignOutDialog && (
+          <div role="presentation" onClick={() => setShowSignOutDialog(false)} style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "rgba(15,23,42,.62)", backdropFilter: "blur(4px)" }}>
+            <section role="alertdialog" aria-modal="true" aria-labelledby="signout-dialog-title" aria-describedby="signout-dialog-description" onClick={(event) => event.stopPropagation()} style={{ width: "100%", maxWidth: "440px", overflow: "hidden", borderRadius: "18px", background: "#fff", boxShadow: "0 24px 70px rgba(15,23,42,.3)" }}>
+              <div style={{ padding: "24px 26px 22px", color: "#fff", background: "linear-gradient(135deg,#1d4ed8,#2563eb,#1e40af)" }}><strong style={{ fontSize: "11px", letterSpacing: "1.5px" }}>ZIMBUILD AI</strong><h2 id="signout-dialog-title" style={{ margin: "8px 0 0", fontSize: "21px" }}>Sign out of ZimBuild AI?</h2></div>
+              <div style={{ padding: "24px 26px 26px" }}><p id="signout-dialog-description" style={{ margin: 0, color: "#475569", fontSize: "14px", lineHeight: 1.7 }}>Are you sure you want to exit ZimBuild AI? You will need to sign in again to access your construction projects and estimates.</p><div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "26px" }}><button type="button" onClick={() => setShowSignOutDialog(false)} style={{ padding: "11px 18px", borderRadius: "9px", border: "1px solid #cbd5e1", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 650, cursor: "pointer" }}>Stay signed in</button><button type="button" onClick={confirmSignOut} style={{ padding: "11px 18px", borderRadius: "9px", border: "1px solid #1d4ed8", background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Yes, sign out</button></div></div>
+            </section>
+          </div>
+        )}
       </div>
     );
   }

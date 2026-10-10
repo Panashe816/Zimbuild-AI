@@ -1178,6 +1178,85 @@ function App() {
     </div>
   );
 
+
+  // -----------------------------------------------------------------------
+  // Safe status and analysis summaries used by the New Project workflow
+  // -----------------------------------------------------------------------
+
+  const renderAnalysisStatus = () => {
+    if (mapAnalysisState === "analysing" || isUploading) {
+      return (
+        <div className="notice-box" role="status" aria-live="polite">
+          <strong>Analysing your architectural plan…</strong>
+          <span>
+            The plan is being uploaded, prepared and analysed. This may take a
+            little while; please keep this page open.
+          </span>
+        </div>
+      );
+    }
+
+    if (mapAnalysisState === "analysed" && visionAnalysis) {
+      return (
+        <div className="notice-box" role="status">
+          <strong>Plan analysis complete</strong>
+          <span>
+            Your plan has been analysed. Continue to review the detected
+            information and enter construction details.
+          </span>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderVisionAnalysisSummary = () => {
+    if (!visionAnalysis) return null;
+
+    const formatDetectedNumber = (value, suffix = "") => {
+      const number = Number(value);
+      return Number.isFinite(number)
+        ? `${number.toLocaleString("en-US", { maximumFractionDigits: 2 })}${suffix}`
+        : "Not available";
+    };
+
+    const summaryItems = [
+      { label: "Floor area", value: formatDetectedNumber(visionEdits.floorArea, " m²") },
+      { label: "Walls detected", value: formatDetectedNumber(visionEdits.walls) },
+      { label: "Rooms detected", value: formatDetectedNumber(visionEdits.rooms) },
+      { label: "Doors detected", value: formatDetectedNumber(visionEdits.doors) },
+      { label: "Windows detected", value: formatDetectedNumber(visionEdits.windows) },
+      { label: "Total wall length", value: formatDetectedNumber(visionEdits.wallLength, " m") },
+    ];
+
+    return (
+      <section className="project-card" aria-labelledby="vision-summary-heading" style={{ marginBottom: "22px" }}>
+        <div className="card-header">
+          <div>
+            <p className="eyebrow">AI plan analysis</p>
+            <h3 id="vision-summary-heading">Detected building information</h3>
+            <p className="card-subtitle">
+              Review these preliminary detections and adjust the construction
+              parameters below where you have more accurate information.
+            </p>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
+          {summaryItems.map((item) => (
+            <div key={item.label} style={{ padding: "15px", border: "1px solid #e2e8f0", borderRadius: "10px", background: "#fff" }}>
+              <div style={{ color: "#64748b", fontSize: "12px" }}>{item.label}</div>
+              <strong style={{ display: "block", marginTop: "8px", color: "#0f172a", fontSize: "18px" }}>{item.value}</strong>
+            </div>
+          ))}
+        </div>
+        <p className="field-help" style={{ marginTop: "14px" }}>
+          Computer vision results are estimates and should be checked against the original drawing.
+        </p>
+      </section>
+    );
+  };
+
   // -----------------------------------------------------------------------
   // Step 1 - Project + plan
   // -----------------------------------------------------------------------

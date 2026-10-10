@@ -1201,7 +1201,7 @@ function App() {
             </h3>
           </div>
 
-          {renderStepIndicator()}
+          <span className="field-help">Step {step} of 3</span>
         </div>
 
         <div className="notice-box">
@@ -1919,7 +1919,7 @@ function App() {
             </p>
           </div>
 
-          {renderStepIndicator()}
+          <span className="field-help">Step {step} of 3</span>
         </section>
 
         <section className="results-total-card">

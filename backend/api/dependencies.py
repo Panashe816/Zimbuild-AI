@@ -43,12 +43,21 @@ def get_current_user(claims: dict[str, Any] = Depends(get_token_claims)) -> User
         raise HTTPException(status_code=403, detail="A user account is required.")
 
     with Session(engine) as db:
-        user = db.query(User).filter(User.google_id == str(claims["sub"])).one_or_none()
+        subject = str(claims["sub"])
+        email = str(claims["email"]).strip().lower()
+        user = db.query(User).filter(User.google_id == subject).one_or_none()
+
+        # Backfill valid sessions created before Google users were persisted.
         if user is None:
-            raise HTTPException(
-                status_code=401,
-                detail="User account was not found. Please sign in again.",
-            )
+            user = db.query(User).filter(User.email == email).one_or_none()
+            if user is None:
+                user = User(google_id=subject, email=email, name=email.split("@")[0])
+                db.add(user)
+            else:
+                user.google_id = subject
+            db.commit()
+            db.refresh(user)
+
         db.expunge(user)
         return user
 

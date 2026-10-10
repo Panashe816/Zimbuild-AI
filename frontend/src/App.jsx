@@ -1094,6 +1094,91 @@ function App() {
   );
 
   // -----------------------------------------------------------------------
+  // Dashboard home - focused app experience
+  // -----------------------------------------------------------------------
+
+  const renderDashboardHome = () => (
+    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+      <section style={{
+        padding: "clamp(24px, 4vw, 42px)",
+        border: "1px solid #e2e8f0",
+        borderRadius: "18px",
+        background: "#ffffff",
+        boxShadow: "0 8px 26px rgba(15, 23, 42, 0.04)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "30px" }}>
+          <div aria-hidden="true" style={{
+            width: "54px", height: "54px", flexShrink: 0,
+            display: "grid", placeItems: "center",
+            borderRadius: "15px", background: "#0f172a", color: "#ffffff",
+            fontSize: "27px", fontWeight: 850, letterSpacing: "-1px",
+          }}>Z</div>
+          <div>
+            <div style={{ color: "#64748b", fontSize: "11px", fontWeight: 750, letterSpacing: "1.4px", textTransform: "uppercase" }}>Construction intelligence</div>
+            <h2 style={{ margin: "4px 0 0", color: "#0f172a", fontSize: "23px", letterSpacing: "-0.6px" }}>ZimBuild AI</h2>
+          </div>
+        </div>
+
+        <p style={{ margin: "0 0 10px", color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.4px", textTransform: "uppercase" }}>Your workspace</p>
+        <h3 style={{ margin: 0, maxWidth: "680px", color: "#0f172a", fontSize: "clamp(27px, 3.3vw, 39px)", lineHeight: 1.18, letterSpacing: "-1.2px" }}>
+          Plan your build with clearer quantities and costs.
+        </h3>
+        <p style={{ maxWidth: "690px", margin: "16px 0 0", color: "#64748b", fontSize: "15px", lineHeight: 1.8 }}>
+          Upload a residential architectural plan, review the detected building information, and prepare a construction estimate and bill of quantities in one workspace.
+        </p>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "28px" }}>
+          <button type="button" onClick={startNewProject} style={{
+            minHeight: "52px", padding: "0 23px", display: "inline-flex", alignItems: "center", gap: "12px",
+            border: "1px solid #0f172a", borderRadius: "10px", background: "#0f172a", color: "#ffffff",
+            fontSize: "14px", fontWeight: 750, cursor: "pointer",
+          }}>
+            <span aria-hidden="true" style={{ fontSize: "20px", lineHeight: 1 }}>＋</span>
+            New Project
+          </button>
+          <button type="button" onClick={() => setShowWhatWeDo((value) => !value)} aria-expanded={showWhatWeDo} style={{
+            minHeight: "52px", padding: "0 22px", display: "inline-flex", alignItems: "center", gap: "10px",
+            border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
+            fontSize: "14px", fontWeight: 700, cursor: "pointer",
+          }}>
+            {showWhatWeDo ? "Hide details" : "What we do"}
+            <span aria-hidden="true">{showWhatWeDo ? "−" : "＋"}</span>
+          </button>
+        </div>
+
+        {showWhatWeDo && (
+          <div style={{ marginTop: "22px", padding: "20px 22px", borderRadius: "12px", border: "1px solid #bfdbfe", background: "#f8fbff" }}>
+            <h4 style={{ margin: "0 0 8px", color: "#0f172a", fontSize: "16px" }}>From architectural plan to cost estimate</h4>
+            <p style={{ margin: 0, color: "#475569", fontSize: "14px", lineHeight: 1.8 }}>
+              ZimBuild AI analyses a residential plan, helps identify building elements and quantities, then uses project details to prepare estimated material requirements and construction costs. You can review your results, revisit saved estimates, and download an available bill of quantities as a PDF. Estimates should be checked by a qualified construction professional before building or purchasing materials.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: "22px" }}>
+        <div style={{ marginBottom: "14px" }}>
+          <p className="eyebrow" style={{ marginBottom: "6px" }}>How it works</p>
+          <h3 style={{ margin: 0, color: "#0f172a", fontSize: "19px" }}>Your project workflow</h3>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "14px" }}>
+          {[
+            { number: "01", title: "Upload a plan", detail: "Start with a residential architectural drawing and enter the project details." },
+            { number: "02", title: "Review quantities", detail: "Check the plan analysis and confirm the construction parameters." },
+            { number: "03", title: "View your BoQ", detail: "Review estimated quantities and costs, then download a PDF when available." },
+          ].map((item) => (
+            <div key={item.number} style={{ padding: "20px", borderRadius: "14px", border: "1px solid #e2e8f0", background: "#ffffff" }}>
+              <div style={{ color: "#2563eb", fontSize: "12px", fontWeight: 850, letterSpacing: "1px" }}>{item.number}</div>
+              <h4 style={{ margin: "12px 0 7px", color: "#0f172a", fontSize: "15px" }}>{item.title}</h4>
+              <p style={{ margin: 0, color: "#64748b", fontSize: "13px", lineHeight: 1.7 }}>{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+
+  // -----------------------------------------------------------------------
   // Step 1 - Project + plan
   // -----------------------------------------------------------------------
 

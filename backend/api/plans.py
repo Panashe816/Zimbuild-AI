@@ -293,5 +293,6 @@ def get_my_projects(current_user: User = Depends(get_current_user)):
                 "total_cost": estimate.total_cost if estimate and estimate.total_cost is not None else totals.get("grand_total"),
                 "currency": estimate.currency if estimate else project.get("currency", "USD"),
                 "created_at": (estimate.created_at if estimate else plan.created_at).isoformat(),
+                "result": result if estimate else None,
             })
         return {"projects": projects}

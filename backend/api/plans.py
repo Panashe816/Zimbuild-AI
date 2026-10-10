@@ -2,6 +2,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from backend.database import engine
+from backend.models import Plan
 
 
 # ============================================================
@@ -129,8 +133,32 @@ async def upload_plan(
             detail="Failed to store the uploaded plan.",
         ) from exc
 
+    # Persist the plan record in PostgreSQL while keeping the existing
+    # upload path and frontend response fields unchanged.
+    try:
+        with Session(engine) as db:
+            plan_record = Plan(
+                original_filename=original_filename,
+                stored_filename=stored_filename,
+                status="uploaded",
+            )
+            db.add(plan_record)
+            db.commit()
+            db.refresh(plan_record)
+            plan_id = plan_record.id
+    except Exception as exc:
+        try:
+            upload_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        raise HTTPException(
+            status_code=500,
+            detail="The plan file was received but could not be saved to the database.",
+        ) from exc
+
     return {
         "status": "uploaded",
+        "plan_id": plan_id,
         "original_filename": original_filename,
         "stored_filename": stored_filename,
         "file_extension": extension,

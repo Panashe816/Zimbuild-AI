@@ -58,7 +58,8 @@ const DEFAULTS = {
 };
 
 function App() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(5);
+  const [showWhatWeDo, setShowWhatWeDo] = useState(false);
 
   // -----------------------------------------------------------------------
   // Google authentication
@@ -888,6 +889,8 @@ function App() {
 
   const startNewProject = () => {
     setStep(1);
+    setShowWhatWeDo(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     setProjectName("");
     setLocation("");
@@ -1045,12 +1048,13 @@ function App() {
 
       <nav className="sidebar-nav">
         <button
-          className={`nav-item ${
-            step === 1
-              ? "active"
-              : ""
-          }`}
-          onClick={() => setStep(1)}
+          type="button"
+          className={`nav-item ${step === 5 ? "active" : ""}`}
+          onClick={() => {
+            setStep(5);
+            setShowWhatWeDo(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
         >
           <span>⌂</span>
           Dashboard
@@ -1090,424 +1094,15 @@ function App() {
   );
 
   // -----------------------------------------------------------------------
-  // House gallery
-  // -----------------------------------------------------------------------
-
-  const renderHouseGallery = () => (
-    <section className="house-gallery">
-      <div className="gallery-heading">
-        <div>
-          <p className="eyebrow">
-            Build with confidence
-          </p>
-
-          <h3>
-            From your plan to your future home.
-          </h3>
-        </div>
-
-        <p>
-          Analyse residential architectural plans
-          and turn them into structured construction
-          quantities and cost estimates.
-        </p>
-      </div>
-
-      <div className="house-gallery-grid">
-        <div
-          className="house-image house-image-large"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=85)",
-          }}
-        >
-          <div className="house-overlay">
-            <span>
-              Modern residential
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="house-image"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=85)",
-          }}
-        >
-          <div className="house-overlay">
-            <span>
-              Contemporary design
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="house-image"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=85)",
-          }}
-        >
-          <div className="house-overlay">
-            <span>
-              Residential architecture
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="house-image"
-          style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=85)",
-          }}
-        >
-          <div className="house-overlay">
-            <span>
-              Future home
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-
-  // -----------------------------------------------------------------------
-  // Step indicator
-  // -----------------------------------------------------------------------
-
-  const renderStepIndicator = () => (
-    <div className="step-indicator">
-      <div
-        className={
-          step >= 1
-            ? "step-active"
-            : ""
-        }
-      >
-        1
-      </div>
-
-      <span
-        className={
-          step >= 2
-            ? "line-active"
-            : ""
-        }
-      ></span>
-
-      <div
-        className={
-          step >= 2
-            ? "step-active"
-            : ""
-        }
-      >
-        2
-      </div>
-
-      <span
-        className={
-          step >= 3
-            ? "line-active"
-            : ""
-        }
-      ></span>
-
-      <div
-        className={
-          step >= 3
-            ? "step-active"
-            : ""
-        }
-      >
-        3
-      </div>
-    </div>
-  );
-
-  // -----------------------------------------------------------------------
-  // AI analysis status
-  // -----------------------------------------------------------------------
-
-  const renderAnalysisStatus = () => {
-    if (mapAnalysisState === "idle") {
-      return null;
-    }
-
-    if (mapAnalysisState === "analysing") {
-      return (
-        <div className="analysis-status analysis-running">
-          <div className="analysis-spinner"></div>
-
-          <div>
-            <strong>
-              Analysing architectural plan...
-            </strong>
-
-            <span>
-              ZimBuild AI is sending the prepared plan to the
-              Vision model and extracting walls, rooms, doors,
-              windows and floor information.
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="analysis-status analysis-complete">
-        <div className="analysis-check">✓</div>
-
-        <div>
-          <strong>Visualisation complete</strong>
-
-          <span>
-            The architectural plan has been analysed successfully.
-            Review the detected information below before continuing.
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // -----------------------------------------------------------------------
-  // Vision analysis summary
-  // -----------------------------------------------------------------------
-
-  const renderVisionAnalysisSummary = () => {
-    if (!visionAnalysis) {
-      return null;
-    }
-
-    const walls = visionAnalysis.walls || {};
-    const rooms = visionAnalysis.rooms || {};
-    const doors = visionAnalysis.doors || {};
-    const windows = visionAnalysis.windows || {};
-    const floor = visionAnalysis.floor || {};
-    const roof = visionAnalysis.roof || {};
-
-    const externalWalls = walls.external_walls || [];
-    const internalWalls = walls.internal_walls || [];
-
-    return (
-      <section className="project-card details-card">
-        <div className="card-header">
-          <div>
-            <p className="eyebrow">Visualisation result</p>
-
-            <h3>What ZimBuild AI detected</h3>
-
-            <p className="card-subtitle">
-              These values come directly from the Vision analysis of
-              the uploaded architectural plan.
-            </p>
-          </div>
-        </div>
-
-        <div className="notice-box">
-          <strong>Plan analysed successfully</strong>
-
-          <span>
-            Please review the detected building information. The
-            construction parameters below are separate inputs that
-            are supplied by the user for quantity estimation.
-          </span>
-        </div>
-
-        <div
-        className="results-grid"
-        style={{
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-        }}
-      >
-          <div className="result-card">
-            <p className="eyebrow">Floor area</p>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={visionEdits.floorArea}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  floorArea: event.target.value,
-                }))
-              }
-              aria-label="Corrected floor area"
-            />
-            <span>recommended floor area (editable)</span>
-          </div>
-
-          <div className="result-card">
-            <p className="eyebrow">Walls</p>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={visionEdits.walls}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  walls: event.target.value,
-                }))
-              }
-              aria-label="Corrected wall count"
-            />
-            <span>detected wall segments (editable)</span>
-          </div>
-
-          <div className="result-card">
-            <p className="eyebrow">Rooms</p>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={visionEdits.rooms}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  rooms: event.target.value,
-                }))
-              }
-              aria-label="Corrected room count"
-            />
-            <span>detected rooms (editable)</span>
-          </div>
-
-          <div className="result-card">
-            <p className="eyebrow">Windows</p>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={visionEdits.windows}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  windows: event.target.value,
-                }))
-              }
-              aria-label="Corrected window count"
-            />
-            <span>detected windows (editable)</span>
-          </div>
-
-          <div className="result-card">
-            <p className="eyebrow">Wall length</p>
-            <div className="input-with-unit">
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={visionEdits.wallLength}
-                onChange={(event) =>
-                  setVisionEdits((current) => ({
-                    ...current,
-                    wallLength: event.target.value,
-                  }))
-                }
-                aria-label="Corrected total wall length"
-              />
-              <span>m</span>
-            </div>
-            <span>total detected wall length (editable)</span>
-          </div>
-
-          <div className="result-card">
-            <p className="eyebrow">Doors</p>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={visionEdits.doors}
-              onChange={(event) =>
-                setVisionEdits((current) => ({
-                  ...current,
-                  doors: event.target.value,
-                }))
-              }
-              aria-label="Corrected door count"
-            />
-            <span>detected doors (editable)</span>
-          </div>
-        </div>
-
-        <div className="analysis-summary-grid">
-          <div>
-            <span>External walls</span>
-            <strong>
-              {externalWalls.length || 0} segments
-            </strong>
-          </div>
-
-          <div>
-            <span>External wall length</span>
-            <strong>
-              {formatNumber(walls.total_external_wall_length_m ?? 0)} m
-            </strong>
-          </div>
-
-          <div>
-            <span>Internal walls</span>
-            <strong>
-              {internalWalls.length || 0} segments
-            </strong>
-          </div>
-
-          <div>
-            <span>Internal wall length</span>
-            <strong>
-              {formatNumber(walls.total_internal_wall_length_m ?? 0)} m
-            </strong>
-          </div>
-        </div>
-
-        <div className="notice-box">
-          <strong>
-            Roof detection: {roof.present ? "Detected" : "Not detected"}
-          </strong>
-
-          <span>
-            Roofing is currently excluded from the ZimBuild AI BoQ.
-          </span>
-        </div>
-      </section>
-    );
-  };
-
-  // -----------------------------------------------------------------------
   // Step 1 - Project + plan
   // -----------------------------------------------------------------------
 
   const renderProjectStep = () => (
     <>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">
-            AI-powered construction estimation
-          </p>
-
-          <h3>
-            Turn architectural plans into
-            <span>
-              {" "}
-              quantities, costs and BoQs.
-            </span>
-          </h3>
-
-          <p className="hero-description">
-            Upload a residential architectural
-            plan and ZimBuild AI will analyse
-            the drawing, identify relevant
-            building information and prepare
-            the construction estimate.
-          </p>
-        </div>
+      <section className="notice-box" style={{ marginBottom: "22px" }}>
+        <strong>New project</strong>
+        <span>Enter your project details and upload a residential architectural plan to generate quantities, costs and a bill of quantities.</span>
       </section>
-
-      {renderHouseGallery()}
 
       <section className="project-card">
         <div className="card-header">
@@ -2752,8 +2347,6 @@ function App() {
           </div>
           <div style={{ padding: "0 10px", color: "#94a3b8", fontSize: "10px", fontWeight: 800, letterSpacing: "1.4px" }}>MANAGEMENT</div>
           <div style={{ marginTop: "14px", padding: "13px 12px", borderRadius: "10px", background: "#1d4ed8", fontSize: "13px", fontWeight: 700 }}>▦ &nbsp; Overview</div>
-          <div style={{ marginTop: "8px", padding: "13px 12px", borderRadius: "10px", color: "#cbd5e1", fontSize: "13px" }}>▤ &nbsp; Past plans</div>
-          <div style={{ marginTop: "8px", padding: "13px 12px", borderRadius: "10px", color: "#cbd5e1", fontSize: "13px" }}>♙ &nbsp; Users</div>
           <div style={{ flex: 1 }} />
           <div style={{ padding: "14px 10px", borderTop: "1px solid #334155", color: "#cbd5e1", fontSize: "12px", overflowWrap: "anywhere" }}>{authUser.email}</div>
           <button type="button" onClick={handleSignOut} style={{ marginTop: "10px", minHeight: "42px", borderRadius: "9px", border: "1px solid #475569", background: "transparent", color: "#fff", fontWeight: 650, cursor: "pointer" }}>Sign out</button>
@@ -2824,6 +2417,9 @@ function App() {
 
       <main className="main-content">
         {renderHeader()}
+
+        {step === 5 &&
+          renderDashboardHome()}
 
         {step === 1 &&
           renderProjectStep()}

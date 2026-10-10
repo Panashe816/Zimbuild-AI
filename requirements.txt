@@ -8,3 +8,4 @@ PyJWT
 email-validator
 SQLAlchemy
 psycopg[binary]
+reportlab

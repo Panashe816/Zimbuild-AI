@@ -32,11 +32,12 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from backend.api.dependencies import get_current_user
 from backend.database import engine
-from backend.models import Estimate, Plan
+from backend.models import Estimate, Plan, User
 
 from backend.services.construction_parameters_service import extract_plan_data
 from backend.services.building_quantity_service import calculate_building_quantities
@@ -151,6 +152,14 @@ def _json_safe(value: Any) -> Any:
             return None
 
     return value
+
+
+def _assert_plan_owner(processed_filename: str, current_user: User) -> None:
+    """Prevent a user from estimating a plan uploaded by another account."""
+    with Session(engine) as db:
+        plan = db.query(Plan).filter(Plan.stored_filename == processed_filename).one_or_none()
+        if plan is None or plan.user_id != current_user.id:
+            raise HTTPException(status_code=404, detail="Processed plan not found.")
 
 
 def _get_processed_plan_path(processed_filename: str) -> Path:
@@ -624,11 +633,13 @@ def calculate_estimation(
     wall_thickness_m: float = Query(0.2, gt=0),
     wastage_percentage: float = Query(5.0, ge=0),
     threshold: float = Query(0.5, ge=0.0, le=1.0),
+    current_user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Run the new AI visualiser and return Vision + building quantities."""
 
     del threshold  # The new Vision analyser does not use the old wall threshold.
 
+    _assert_plan_owner(processed_filename, current_user)
     processed_path = _get_processed_plan_path(processed_filename)
     started_at = time.perf_counter()
 
@@ -710,6 +721,7 @@ def full_estimation(
     location_profile_id: str = Query("growth_point", min_length=1),
     threshold: float = Query(0.5, ge=0.0, le=1.0),
     currency: str = Query("USD", min_length=1),
+    current_user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """
     Run the complete NEW AI visualisation -> BoQ/cost pipeline.
@@ -721,6 +733,7 @@ def full_estimation(
     del threshold  # Kept only for backwards-compatible frontend/API calls.
 
     started_at = time.perf_counter()
+    _assert_plan_owner(processed_filename, current_user)
     processed_path = _get_processed_plan_path(processed_filename)
     normalised_location = _normalise_location_profile(location_profile_id)
 

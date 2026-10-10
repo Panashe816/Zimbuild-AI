@@ -1,11 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.database import create_database_tables
 from backend.api.health import router as health_router
 from backend.api.plans import router as plans_router
 from backend.api.estimation import router as estimation_router
 from backend.api.boq import router as boq_router
 from backend.api.auth import router as auth_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create any missing database tables on startup.
+    create_database_tables()
+    yield
 
 
 app = FastAPI(
@@ -16,6 +26,7 @@ app = FastAPI(
         "in Zimbabwe."
     ),
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 

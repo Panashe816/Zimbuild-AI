@@ -70,6 +70,7 @@ function App() {
 
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const googleButtonRef = useRef(null);
 
   // -----------------------------------------------------------------------
@@ -303,18 +304,15 @@ function App() {
   };
 
   const handleSignOut = () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to sign out?"
-    );
+    setShowSignOutDialog(true);
+  };
 
-    if (!confirmed) {
-      return;
-    }
-
+  const confirmSignOut = () => {
     localStorage.removeItem("zimbuild_auth_user");
     localStorage.removeItem("zimbuild_auth_token");
     setAuthUser(null);
     setAuthError("");
+    setShowSignOutDialog(false);
   };
 
   // -----------------------------------------------------------------------
@@ -2388,6 +2386,160 @@ function App() {
         {step === 3 &&
           renderResultsStep()}
       </main>
+
+      {showSignOutDialog && (
+        <div
+          role="presentation"
+          onClick={() => setShowSignOutDialog(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+            background: "rgba(15, 23, 42, 0.62)",
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="signout-dialog-title"
+            aria-describedby="signout-dialog-description"
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "440px",
+              overflow: "hidden",
+              borderRadius: "18px",
+              background: "#ffffff",
+              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.3)",
+              border: "1px solid rgba(191, 219, 254, 0.9)",
+            }}
+          >
+            <div
+              style={{
+                padding: "24px 26px 22px",
+                color: "#ffffff",
+                background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #1e40af 100%)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                }}
+              >
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: "46px",
+                    height: "46px",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "13px",
+                    background: "rgba(255, 255, 255, 0.16)",
+                    border: "1px solid rgba(255, 255, 255, 0.28)",
+                    fontSize: "22px",
+                    fontWeight: 800,
+                  }}
+                >
+                  Z
+                </div>
+                <div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      letterSpacing: "1.5px",
+                      textTransform: "uppercase",
+                      color: "#dbeafe",
+                    }}
+                  >
+                    ZimBuild AI
+                  </p>
+                  <h2
+                    id="signout-dialog-title"
+                    style={{
+                      margin: "5px 0 0",
+                      fontSize: "21px",
+                      lineHeight: 1.3,
+                      fontWeight: 750,
+                      color: "#ffffff",
+                    }}
+                  >
+                    Sign out of ZimBuild AI?
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: "24px 26px 26px" }}>
+              <p
+                id="signout-dialog-description"
+                style={{
+                  margin: 0,
+                  color: "#475569",
+                  fontSize: "14px",
+                  lineHeight: 1.7,
+                }}
+              >
+                Are you sure you want to exit ZimBuild AI? You will need to
+                sign in again to access your construction projects and estimates.
+              </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                  marginTop: "26px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowSignOutDialog(false)}
+                  style={{
+                    padding: "11px 18px",
+                    borderRadius: "9px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#334155",
+                    fontSize: "13px",
+                    fontWeight: 650,
+                    cursor: "pointer",
+                  }}
+                >
+                  Stay signed in
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmSignOut}
+                  style={{
+                    padding: "11px 18px",
+                    borderRadius: "9px",
+                    border: "1px solid #1d4ed8",
+                    background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.24)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Yes, sign out
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

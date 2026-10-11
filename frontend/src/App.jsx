@@ -1031,8 +1031,22 @@ function App() {
   const renderSidebar = () => (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark">
-          Z
+        <div
+          className="brand-mark"
+          aria-label="ZimBuild AI logo"
+          style={{
+            display: "grid",
+            placeItems: "center",
+            background: "#2563eb",
+            color: "#ffffff",
+            borderRadius: "12px",
+            flexShrink: 0,
+          }}
+        >
+          <svg width="30" height="30" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M7 21.5 24 7l17 14.5v18H7v-18Z" stroke="white" strokeWidth="2.6" strokeLinejoin="round" />
+            <path d="M16 39V25h16v14M16 25l8-7 8 7M24 25v14" stroke="#bfdbfe" strokeWidth="2.4" strokeLinejoin="round" />
+          </svg>
         </div>
 
         <div>
@@ -1107,12 +1121,24 @@ function App() {
         boxShadow: "0 8px 26px rgba(15, 23, 42, 0.04)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "30px" }}>
-          <div aria-hidden="true" style={{
-            width: "54px", height: "54px", flexShrink: 0,
-            display: "grid", placeItems: "center",
-            borderRadius: "15px", background: "#0f172a", color: "#ffffff",
-            fontSize: "27px", fontWeight: 850, letterSpacing: "-1px",
-          }}>Z</div>
+          <div
+            aria-label="ZimBuild AI logo"
+            style={{
+              width: "54px",
+              height: "54px",
+              flexShrink: 0,
+              display: "grid",
+              placeItems: "center",
+              borderRadius: "15px",
+              background: "#2563eb",
+              boxShadow: "0 8px 18px rgba(37, 99, 235, 0.18)",
+            }}
+          >
+            <svg width="38" height="38" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <path d="M7 21.5 24 7l17 14.5v18H7v-18Z" stroke="white" strokeWidth="2.6" strokeLinejoin="round" />
+              <path d="M16 39V25h16v14M16 25l8-7 8 7M24 25v14" stroke="#bfdbfe" strokeWidth="2.4" strokeLinejoin="round" />
+            </svg>
+          </div>
           <div>
             <div style={{ color: "#64748b", fontSize: "11px", fontWeight: 750, letterSpacing: "1.4px", textTransform: "uppercase" }}>Construction intelligence</div>
             <h2 style={{ margin: "4px 0 0", color: "#0f172a", fontSize: "23px", letterSpacing: "-0.6px" }}>ZimBuild AI</h2>

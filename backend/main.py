@@ -1,4 +1,3 @@
-```python
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -68,4 +67,3 @@ def root():
         "version": "1.0.0",
         "status": "running",
     }
-```

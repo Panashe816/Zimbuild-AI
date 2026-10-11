@@ -1379,12 +1379,31 @@ function App() {
             </p>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px" }}>
-          {summaryItems.map((item) => (
-            <div key={item.label} style={{ padding: "15px", border: "1px solid #e2e8f0", borderRadius: "10px", background: "#fff" }}>
-              <div style={{ color: "#64748b", fontSize: "12px" }}>{item.label}</div>
-              <strong style={{ display: "block", marginTop: "8px", color: "#0f172a", fontSize: "18px" }}>{item.value}</strong>
-            </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+          {[
+            { key: "floorArea", label: "Floor area", unit: "m²", step: "0.01", min: "0.01" },
+            { key: "walls", label: "Walls detected", unit: "", step: "1", min: "0" },
+            { key: "rooms", label: "Rooms detected", unit: "", step: "1", min: "0" },
+            { key: "doors", label: "Doors detected", unit: "", step: "1", min: "0" },
+            { key: "windows", label: "Windows detected", unit: "", step: "1", min: "0" },
+            { key: "wallLength", label: "Total wall length", unit: "m", step: "0.01", min: "0" },
+          ].map((item) => (
+            <label key={item.key} htmlFor={`vision-${item.key}`} style={{ display: "block", padding: "13px", border: "1px solid #e2e8f0", borderRadius: "10px", background: "#fff", minWidth: 0 }}>
+              <span style={{ display: "block", color: "#64748b", fontSize: "12px", marginBottom: "9px" }}>{item.label}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input
+                  id={`vision-${item.key}`}
+                  type="number"
+                  min={item.min}
+                  step={item.step}
+                  value={visionEdits[item.key]}
+                  onChange={(event) => setVisionEdits((current) => ({ ...current, [item.key]: event.target.value }))}
+                  aria-label={item.label}
+                  style={{ boxSizing: "border-box", width: "100%", minWidth: 0, padding: "8px 9px", border: "1px solid #cbd5e1", borderRadius: "7px", color: "#0f172a", fontSize: "16px", fontWeight: 700 }}
+                />
+                {item.unit && <span style={{ color: "#64748b", fontSize: "12px", whiteSpace: "nowrap" }}>{item.unit}</span>}
+              </span>
+            </label>
           ))}
         </div>
         <p className="field-help" style={{ marginTop: "14px" }}>
@@ -1851,76 +1870,13 @@ function App() {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="hardcoreDepth">
-              Hardcore depth
-            </label>
 
-            <div className="input-with-unit">
-              <input
-                id="hardcoreDepth"
-                type="number"
-                min="0.05"
-                step="0.05"
-                value={hardcoreDepth}
-                onChange={(event) =>
-                  setHardcoreDepth(
-                    event.target.value
-                  )
-                }
-              />
-
-              <span>
-                m
-              </span>
-            </div>
-          </div>
         </div>
 
         <div className="small-form-grid">
-          <div className="form-group">
-            <label htmlFor="wastage">
-              Material allowance
-            </label>
 
-            <div className="input-with-unit">
-              <input
-                id="wastage"
-                type="number"
-                min="0"
-                step="0.5"
-                value={wastagePercentage}
-                onChange={(event) =>
-                  setWastagePercentage(
-                    event.target.value
-                  )
-                }
-              />
 
-              <span>
-                %
-              </span>
-            </div>
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="reinforcementRuns">
-              Reinforcement runs
-            </label>
-
-            <input
-              id="reinforcementRuns"
-              type="number"
-              min="1"
-              step="1"
-              value={reinforcementRuns}
-              onChange={(event) =>
-                setReinforcementRuns(
-                  event.target.value
-                )
-              }
-            />
-          </div>
         </div>
       </div>
 
@@ -1930,55 +1886,9 @@ function App() {
         </p>
 
         <div className="small-form-grid">
-          <div className="form-group">
-            <label htmlFor="brickForceInterval">
-              Brick-force interval
-            </label>
 
-            <div className="input-with-unit">
-              <input
-                id="brickForceInterval"
-                type="number"
-                min="1"
-                step="1"
-                value={brickForceInterval}
-                onChange={(event) =>
-                  setBrickForceInterval(
-                    event.target.value
-                  )
-                }
-              />
 
-              <span>
-                courses
-              </span>
-            </div>
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="meshAllowance">
-              Reinforcement mesh allowance
-            </label>
-
-            <div className="input-with-unit">
-              <input
-                id="meshAllowance"
-                type="number"
-                min="0"
-                step="1"
-                value={meshAllowance}
-                onChange={(event) =>
-                  setMeshAllowance(
-                    event.target.value
-                  )
-                }
-              />
-
-              <span>
-                %
-              </span>
-            </div>
-          </div>
         </div>
 
         <div className="form-group checkbox-group">

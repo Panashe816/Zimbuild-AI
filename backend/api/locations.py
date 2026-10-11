@@ -15,12 +15,13 @@ This module does not calculate prices or modify the estimation pipeline.
 
 from fastapi import APIRouter, HTTPException, Query
 
-from data.zimbabwe_locations import (
+from backend.data.zimbabwe_locations import (
     SETTLEMENT_CATEGORIES,
     get_provinces,
     get_districts,
     get_location_details,
     get_settlement_categories,
+    get_canonical_province,
 )
 
 
@@ -64,8 +65,6 @@ def list_districts(
     """
     Return districts belonging to the selected province.
     """
-    from data.zimbabwe_locations import get_canonical_province
-
     canonical_province = get_canonical_province(province)
 
     if canonical_province is None:

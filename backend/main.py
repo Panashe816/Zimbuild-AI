@@ -1,15 +1,18 @@
+```python
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import create_database_tables
+
 from backend.api.health import router as health_router
 from backend.api.plans import router as plans_router
 from backend.api.estimation import router as estimation_router
 from backend.api.boq import router as boq_router
 from backend.api.auth import router as auth_router
 from backend.api.admin import router as admin_router
+from backend.api.locations import router as locations_router
 
 
 @asynccontextmanager
@@ -24,7 +27,8 @@ app = FastAPI(
     description=(
         "Backend API for automated bill of quantities "
         "and cost estimation for residential buildings "
-        "in Zimbabwe."
+        "in Zimbabwe, including province- and "
+        "district-based location classification."
     ),
     version="1.0.0",
     lifespan=lifespan,
@@ -45,12 +49,16 @@ app.add_middleware(
 )
 
 
+# Register existing API routers.
 app.include_router(health_router)
 app.include_router(plans_router)
 app.include_router(estimation_router)
 app.include_router(boq_router)
 app.include_router(auth_router)
 app.include_router(admin_router)
+
+# Register the new Zimbabwe locations API.
+app.include_router(locations_router)
 
 
 @app.get("/")
@@ -60,3 +68,4 @@ def root():
         "version": "1.0.0",
         "status": "running",
     }
+```

@@ -1506,6 +1506,12 @@ function App() {
             </div>
           </div>
 
+          {locationLoadError && (
+            <div className="error-message" role="alert" style={{ marginBottom: "16px" }}>
+              {locationLoadError}
+            </div>
+          )}
+
           <div className="form-group upload-group">
             <label>
               Architectural plan

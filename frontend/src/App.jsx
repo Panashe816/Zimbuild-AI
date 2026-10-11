@@ -97,6 +97,13 @@ function App() {
   const [locationProfile, setLocationProfile] = useState(
     DEFAULTS.locationProfile
   );
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [districtsLoading, setDistrictsLoading] = useState(false);
+  const [locationLoadError, setLocationLoadError] = useState("");
 
   // -----------------------------------------------------------------------
   // Architectural plan
@@ -476,18 +483,114 @@ function App() {
   };
 
   // -----------------------------------------------------------------------
-  // Update selected location
+  // Zimbabwe province and district selectors
   // -----------------------------------------------------------------------
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProvinces = async () => {
+      setLocationsLoading(true);
+      setLocationLoadError("");
+      try {
+        const response = await fetch(`${API_BASE_URL}/locations/provinces`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Could not load Zimbabwe provinces.");
+        }
+        if (!cancelled) {
+          setProvinces(Array.isArray(data.provinces) ? data.provinces : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLocationLoadError(error.message || "Could not load locations.");
+        }
+      } finally {
+        if (!cancelled) setLocationsLoading(false);
+      }
+    };
+
+    loadProvinces();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!selectedProvince) {
+      setDistricts([]);
+      setSelectedDistrict("");
+      return () => { cancelled = true; };
+    }
+
+    const loadDistricts = async () => {
+      setDistrictsLoading(true);
+      setLocationLoadError("");
+      setSelectedDistrict("");
+      setDistricts([]);
+      setLocation("");
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/locations/districts?province=${encodeURIComponent(selectedProvince)}`
+        );
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || "Could not load districts.");
+        }
+        if (!cancelled) setDistricts(Array.isArray(data.districts) ? data.districts : []);
+      } catch (error) {
+        if (!cancelled) setLocationLoadError(error.message || "Could not load districts.");
+      } finally {
+        if (!cancelled) setDistrictsLoading(false);
+      }
+    };
+
+    loadDistricts();
+    return () => { cancelled = true; };
+  }, [selectedProvince]);
 
   useEffect(() => {
     const option = LOCATION_OPTIONS.find(
       (item) => item.value === locationProfile
     );
-
-    if (option) {
-      setSelectedLocation(option);
-    }
+    if (option) setSelectedLocation(option);
   }, [locationProfile]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedProvince || !selectedDistrict) return () => { cancelled = true; };
+
+    const loadDistrictCategory = async () => {
+      try {
+        const params = new URLSearchParams({
+          province: selectedProvince,
+          district: selectedDistrict,
+        });
+        const response = await fetch(`${API_BASE_URL}/locations/category?${params.toString()}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Could not determine the location category.");
+        if (cancelled) return;
+
+        // Preserve the existing pricing profile IDs and rates.
+        const categoryToPricingProfile = {
+          city_big_town: "city_town",
+          small_town: "growth_point",
+          growth_point_rural_farm: "rural_farm",
+        };
+        const profile = categoryToPricingProfile[data.settlement_category];
+        if (profile) setLocationProfile(profile);
+        setLocation(`${selectedDistrict}, ${selectedProvince}`);
+      } catch (error) {
+        if (!cancelled) {
+          setLocationLoadError(error.message || "Could not determine the location category.");
+          setLocation("");
+        }
+      }
+    };
+
+    loadDistrictCategory();
+    return () => { cancelled = true; };
+  }, [selectedProvince, selectedDistrict]);
 
   useEffect(() => {
     if (authUser?.role === "admin") {
@@ -694,8 +797,12 @@ function App() {
       return;
     }
 
-    if (!location.trim()) {
-      setErrorMessage("Please enter the project location.");
+    if (!selectedProvince || !selectedDistrict || !location.trim()) {
+      setErrorMessage("Please select both a province and a district.");
+      return;
+    }
+    if (locationLoadError) {
+      setErrorMessage("The selected location could not be verified. Please select the province and district again.");
       return;
     }
 
@@ -894,6 +1001,10 @@ function App() {
 
     setProjectName("");
     setLocation("");
+    setSelectedProvince("");
+    setSelectedDistrict("");
+    setDistricts([]);
+    setLocationLoadError("");
 
     setLocationProfile(
       DEFAULTS.locationProfile
@@ -1346,21 +1457,52 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="location">
-                Project location
-              </label>
+              <label htmlFor="provinceSelect">Province</label>
+              <select
+                id="provinceSelect"
+                value={selectedProvince}
+                onChange={(event) => {
+                  setSelectedProvince(event.target.value);
+                  setSelectedDistrict("");
+                  setLocation("");
+                  setLocationLoadError("");
+                }}
+                disabled={locationsLoading}
+                required
+              >
+                <option value="">
+                  {locationsLoading ? "Loading provinces…" : "Select province"}
+                </option>
+                {provinces.map((province) => (
+                  <option key={province} value={province}>{province}</option>
+                ))}
+              </select>
+            </div>
 
-              <input
-                id="location"
-                type="text"
-                placeholder="e.g. Gweru"
-                value={location}
-                onChange={(event) =>
-                  setLocation(
-                    event.target.value
-                  )
-                }
-              />
+            <div className="form-group">
+              <label htmlFor="districtSelect">District</label>
+              <select
+                id="districtSelect"
+                value={selectedDistrict}
+                onChange={(event) => {
+                  setSelectedDistrict(event.target.value);
+                  setLocation("");
+                  setLocationLoadError("");
+                }}
+                disabled={!selectedProvince || districtsLoading}
+                required
+              >
+                <option value="">
+                  {!selectedProvince
+                    ? "Select a province first"
+                    : districtsLoading
+                    ? "Loading districts…"
+                    : "Select district"}
+                </option>
+                {districts.map((district) => (
+                  <option key={district} value={district}>{district}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1852,41 +1994,14 @@ function App() {
         </div>
       </div>
 
-      <div className="calibration-section">
-        <p className="section-label">
-          Project setting
-        </p>
-
-        <div className="form-group">
-          <label htmlFor="locationProfile">
-            Project location type
-          </label>
-
-          <select
-            id="locationProfile"
-            value={locationProfile}
-            onChange={(event) =>
-              setLocationProfile(
-                event.target.value
-              )
-            }
-          >
-            {LOCATION_OPTIONS.map(
-              (option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                >
-                  {option.label}
-                </option>
-              )
-            )}
-          </select>
-
-          <span className="field-help">
-            {selectedLocation.description}
-          </span>
-        </div>
+      <div className="notice-box">
+        <strong>Location confirmed: {location || "Not selected"}</strong>
+        <span>
+          ZimBuild AI uses the province and district selected in Step 1 to apply
+          the existing location pricing profile automatically. You do not need
+          to select a city, small town or rural category again.
+          {selectedLocation?.description ? ` Default profile: ${selectedLocation.description}.` : ""}
+        </span>
       </div>
 
       {errorMessage && (

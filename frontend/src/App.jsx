@@ -83,6 +83,7 @@ function App() {
   const [adminDashboard, setAdminDashboard] = useState(null);
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(false);
   const [adminDashboardError, setAdminDashboardError] = useState("");
+  const [activeAdminView, setActiveAdminView] = useState("overview");
   const [userProjects, setUserProjects] = useState([]);
   const [userProjectsLoading, setUserProjectsLoading] = useState(false);
   const [userProjectsError, setUserProjectsError] = useState("");
@@ -2451,7 +2452,16 @@ function App() {
             <div><div style={{ fontSize: "16px", fontWeight: 800 }}>ZimBuild AI</div><div style={{ marginTop: "3px", color: "#94a3b8", fontSize: "10px" }}>ADMIN CONSOLE</div></div>
           </div>
           <div style={{ padding: "0 10px", color: "#94a3b8", fontSize: "10px", fontWeight: 800, letterSpacing: "1.4px" }}>MANAGEMENT</div>
-          <div style={{ marginTop: "14px", padding: "13px 12px", borderRadius: "10px", background: "#1d4ed8", fontSize: "13px", fontWeight: 700 }}>▦ &nbsp; Overview</div>
+          <div style={{ marginTop: "14px", display: "grid", gap: "6px" }}>
+            {[
+              { id: "overview", label: "Overview", icon: "▦" },
+              { id: "locations", label: "Construction by location", icon: "⌖" },
+              { id: "costs", label: "Building cost & BoQ", icon: "▥" },
+              { id: "materials", label: "Material price trends", icon: "↗" },
+            ].map((item) => (
+              <button key={item.id} type="button" onClick={() => setActiveAdminView(item.id)} style={{ width: "100%", textAlign: "left", padding: "12px 10px", borderRadius: "9px", border: "1px solid transparent", background: activeAdminView === item.id ? "#fff" : "transparent", color: activeAdminView === item.id ? "#0f172a" : "#cbd5e1", fontSize: "12px", fontWeight: activeAdminView === item.id ? 800 : 600, cursor: "pointer" }}>{item.icon} &nbsp; {item.label}</button>
+            ))}
+          </div>
           <div style={{ flex: 1 }} />
           <div style={{ padding: "14px 10px", borderTop: "1px solid #334155", color: "#cbd5e1", fontSize: "12px", overflowWrap: "anywhere" }}>{authUser.email}</div>
           <button type="button" onClick={handleSignOut} style={{ marginTop: "10px", minHeight: "42px", borderRadius: "9px", border: "1px solid #475569", background: "transparent", color: "#fff", fontWeight: 650, cursor: "pointer" }}>Sign out</button>
@@ -2486,95 +2496,113 @@ function App() {
             ))}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))", gap: "18px", marginTop: "20px" }}>
-            <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
-                <div><p style={{ margin: "0 0 5px", color: "#2563eb", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 01</p><h2 style={{ margin: 0, fontSize: "17px" }}>Construction by location</h2></div>
-                <button type="button" onClick={() => downloadAdminReport("locations")} style={{ padding: "9px 12px", border: "1px solid #bfdbfe", borderRadius: "8px", background: "#eff6ff", color: "#1d4ed8", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
+          {activeAdminView === "overview" && (
+            <section style={{ marginTop: "22px", padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
+              <h2 style={{ margin: "0 0 6px", fontSize: "18px" }}>Reports</h2>
+              <p style={{ margin: "0 0 18px", color: "#64748b", fontSize: "12px" }}>Choose a report to view details or export it as PDF.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+                <button type="button" onClick={() => setActiveAdminView("locations")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>⌖</span><strong style={{ display: "block", fontSize: "13px" }}>Construction by location</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Compare project activity by province and district.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
+                <button type="button" onClick={() => setActiveAdminView("costs")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>▥</span><strong style={{ display: "block", fontSize: "13px" }}>Building cost & BoQ</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Review average and median estimated construction costs.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
+                <button type="button" onClick={() => setActiveAdminView("materials")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>↗</span><strong style={{ display: "block", fontSize: "13px" }}>Material price observations</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Review material rates recorded in saved BoQs.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
               </div>
-              {(() => {
-                const rows = adminDashboard?.location_report?.provinces || [];
-                const max = Math.max(1, ...rows.map((row) => Number(row.project_count || 0)));
-                return rows.length ? <div style={{ display: "grid", gap: "15px" }}>{rows.slice(0, 8).map((row) => (
-                  <div key={row.location}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "6px", fontSize: "12px" }}><span style={{ color: "#334155", fontWeight: 650 }}>{row.location}</span><strong style={{ color: "#0f172a" }}>{row.project_count}</strong></div>
-                    <div style={{ height: "8px", overflow: "hidden", borderRadius: "99px", background: "#eef2f7" }}><div style={{ height: "100%", width: `${Math.max(3, Number(row.project_count || 0) / max * 100)}%`, borderRadius: "99px", background: "linear-gradient(90deg,#2563eb,#60a5fa)" }} /></div>
-                  </div>
-                ))}</div> : <p style={{ color: "#94a3b8", fontSize: "13px" }}>Location report appears when completed estimates contain location records.</p>;
-              })()}
-              <p style={{ margin: "18px 0 0", color: "#94a3b8", fontSize: "11px" }}>Based on saved completed estimates.</p>
             </section>
-
-            <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
-                <div><p style={{ margin: "0 0 5px", color: "#0f766e", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 02</p><h2 style={{ margin: 0, fontSize: "17px" }}>Building cost & BoQ</h2></div>
-                <button type="button" onClick={() => downloadAdminReport("costs")} style={{ padding: "9px 12px", border: "1px solid #99f6e4", borderRadius: "8px", background: "#f0fdfa", color: "#0f766e", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
-              </div>
-              {(adminDashboard?.cost_report?.cost_by_currency || []).length ? (
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {(adminDashboard.cost_report.cost_by_currency).map((row) => (
-                    <div key={row.currency} style={{ padding: "15px", borderRadius: "10px", background: "#f8fafc", border: "1px solid #edf2f7" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "center" }}><span style={{ color: "#64748b", fontSize: "12px" }}>{row.currency} · {row.project_count} estimates</span><span style={{ fontSize: "11px", color: "#64748b" }}>Median {Number(row.median_cost).toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></div>
-                      <div style={{ marginTop: "7px", fontSize: "23px", fontWeight: 800, color: "#0f172a" }}>{row.currency} {Number(row.average_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                      <div style={{ marginTop: "4px", color: "#64748b", fontSize: "11px" }}>Average estimated cost</div>
-                      <div style={{ marginTop: "12px", display: "flex", height: "7px", borderRadius: "99px", overflow: "hidden", background: "#e2e8f0" }}>
-                        {[
-                          { key: "materials", color: "#2563eb" },
-                          { key: "labour", color: "#0d9488" },
-                          { key: "transport", color: "#f59e0b" },
-                        ].map((part) => {
-                          const amount = (adminDashboard.cost_report.cost_components || []).find((item) => item.component.toLowerCase() === part.key)?.average || 0;
-                          const total = (adminDashboard.cost_report.cost_components || []).reduce((sum, item) => sum + Number(item.average || 0), 0) || 1;
-                          return <div key={part.key} title={part.key} style={{ height: "100%", width: `${Math.max(0, amount / total * 100)}%`, background: part.color }} />;
-                        })}
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "10px", fontSize: "10px", color: "#64748b" }}><span>🔵 Materials</span><span>🟢 Labour</span><span>🟠 Transport</span></div>
-                    </div>
-                  ))}
-                </div>
-              ) : <p style={{ color: "#94a3b8", fontSize: "13px" }}>Cost averages appear when saved estimates are available.</p>}
-              <p style={{ margin: "15px 0 0", color: "#94a3b8", fontSize: "11px" }}>Averages are grouped by currency.</p>
-            </section>
-
-            <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
-                <div><p style={{ margin: "0 0 5px", color: "#b45309", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 03</p><h2 style={{ margin: 0, fontSize: "17px" }}>Material price observations</h2></div>
-                <button type="button" onClick={() => downloadAdminReport("materials")} style={{ padding: "9px 12px", border: "1px solid #fde68a", borderRadius: "8px", background: "#fffbeb", color: "#92400e", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
-              </div>
-              {(adminDashboard?.material_report?.items || []).length ? (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
-                    <thead><tr>{["Material", "Latest rate", "Change"].map((label) => <th key={label} style={{ padding: "10px 7px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b", fontSize: "10px" }}>{label}</th>)}</tr></thead>
-                    <tbody>{adminDashboard.material_report.items.slice(0, 6).map((row) => (
-                      <tr key={row.material}><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", color: "#334155", fontWeight: 650 }}>{row.material}<div style={{ marginTop: "3px", color: "#94a3b8", fontSize: "10px" }}>{row.observations} saved rate(s)</div></td><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{row.currency} {Number(row.latest_rate).toLocaleString("en-US", { maximumFractionDigits: 2 })}{row.unit ? ` / ${row.unit}` : ""}</td><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", color: row.change_percent > 0 ? "#b91c1c" : row.change_percent < 0 ? "#047857" : "#64748b", whiteSpace: "nowrap" }}>{row.change_percent == null ? "—" : `${row.change_percent > 0 ? "+" : ""}${row.change_percent}%`}</td></tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              ) : <div style={{ padding: "15px", borderRadius: "10px", background: "#fffbeb", color: "#92400e", fontSize: "12px", lineHeight: 1.6 }}>No comparable material rates were found in saved BoQs yet. The full price history will become more useful after the material database is connected.</div>}
-              <p style={{ margin: "14px 0 0", color: "#94a3b8", fontSize: "11px" }}>Historical observations only; not a live supplier price feed.</p>
-            </section>
+          )}
+          <div style={{ display: activeAdminView === "overview" ? "none" : "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "18px", marginTop: "20px" }}>
+            {activeAdminView === "locations" && (
+              <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
+                              <div><p style={{ margin: "0 0 5px", color: "#2563eb", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 01</p><h2 style={{ margin: 0, fontSize: "17px" }}>Construction by location</h2></div>
+                              <button type="button" onClick={() => downloadAdminReport("locations")} style={{ padding: "9px 12px", border: "1px solid #bfdbfe", borderRadius: "8px", background: "#eff6ff", color: "#1d4ed8", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
+                            </div>
+                            {(() => {
+                              const rows = adminDashboard?.location_report?.provinces || [];
+                              const max = Math.max(1, ...rows.map((row) => Number(row.project_count || 0)));
+                              return rows.length ? <div style={{ display: "grid", gap: "15px" }}>{rows.slice(0, 8).map((row) => (
+                                <div key={row.location}>
+                                  <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "6px", fontSize: "12px" }}><span style={{ color: "#334155", fontWeight: 650 }}>{row.location}</span><strong style={{ color: "#0f172a" }}>{row.project_count}</strong></div>
+                                  <div style={{ height: "8px", overflow: "hidden", borderRadius: "99px", background: "#eef2f7" }}><div style={{ height: "100%", width: `${Math.max(3, Number(row.project_count || 0) / max * 100)}%`, borderRadius: "99px", background: "linear-gradient(90deg,#2563eb,#60a5fa)" }} /></div>
+                                </div>
+                              ))}</div> : <p style={{ color: "#94a3b8", fontSize: "13px" }}>Location report appears when completed estimates contain location records.</p>;
+                            })()}
+                            <p style={{ margin: "18px 0 0", color: "#94a3b8", fontSize: "11px" }}>Based on saved completed estimates.</p>
+                          </section>
+            )}
+            {activeAdminView === "costs" && (
+              <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
+                              <div><p style={{ margin: "0 0 5px", color: "#0f766e", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 02</p><h2 style={{ margin: 0, fontSize: "17px" }}>Building cost & BoQ</h2></div>
+                              <button type="button" onClick={() => downloadAdminReport("costs")} style={{ padding: "9px 12px", border: "1px solid #99f6e4", borderRadius: "8px", background: "#f0fdfa", color: "#0f766e", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
+                            </div>
+                            {(adminDashboard?.cost_report?.cost_by_currency || []).length ? (
+                              <div style={{ display: "grid", gap: "12px" }}>
+                                {(adminDashboard.cost_report.cost_by_currency).map((row) => (
+                                  <div key={row.currency} style={{ padding: "15px", borderRadius: "10px", background: "#f8fafc", border: "1px solid #edf2f7" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", gap: "10px", alignItems: "center" }}><span style={{ color: "#64748b", fontSize: "12px" }}>{row.currency} · {row.project_count} estimates</span><span style={{ fontSize: "11px", color: "#64748b" }}>Median {Number(row.median_cost).toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></div>
+                                    <div style={{ marginTop: "7px", fontSize: "23px", fontWeight: 800, color: "#0f172a" }}>{row.currency} {Number(row.average_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                    <div style={{ marginTop: "4px", color: "#64748b", fontSize: "11px" }}>Average estimated cost</div>
+                                    <div style={{ marginTop: "12px", display: "flex", height: "7px", borderRadius: "99px", overflow: "hidden", background: "#e2e8f0" }}>
+                                      {[
+                                        { key: "materials", color: "#2563eb" },
+                                        { key: "labour", color: "#0d9488" },
+                                        { key: "transport", color: "#f59e0b" },
+                                      ].map((part) => {
+                                        const amount = (adminDashboard.cost_report.cost_components || []).find((item) => item.component.toLowerCase() === part.key)?.average || 0;
+                                        const total = (adminDashboard.cost_report.cost_components || []).reduce((sum, item) => sum + Number(item.average || 0), 0) || 1;
+                                        return <div key={part.key} title={part.key} style={{ height: "100%", width: `${Math.max(0, amount / total * 100)}%`, background: part.color }} />;
+                                      })}
+                                    </div>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "10px", fontSize: "10px", color: "#64748b" }}><span>🔵 Materials</span><span>🟢 Labour</span><span>🟠 Transport</span></div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : <p style={{ color: "#94a3b8", fontSize: "13px" }}>Cost averages appear when saved estimates are available.</p>}
+                            <p style={{ margin: "15px 0 0", color: "#94a3b8", fontSize: "11px" }}>Averages are grouped by currency.</p>
+                          </section>
+            )}
+            {activeAdminView === "materials" && (
+              <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap", marginBottom: "18px" }}>
+                              <div><p style={{ margin: "0 0 5px", color: "#b45309", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>REPORT 03</p><h2 style={{ margin: 0, fontSize: "17px" }}>Material price observations</h2></div>
+                              <button type="button" onClick={() => downloadAdminReport("materials")} style={{ padding: "9px 12px", border: "1px solid #fde68a", borderRadius: "8px", background: "#fffbeb", color: "#92400e", fontSize: "12px", fontWeight: 750, cursor: "pointer", whiteSpace: "nowrap" }}>↓ Export PDF</button>
+                            </div>
+                            {(adminDashboard?.material_report?.items || []).length ? (
+                              <div style={{ overflowX: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                                  <thead><tr>{["Material", "Latest rate", "Change"].map((label) => <th key={label} style={{ padding: "10px 7px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b", fontSize: "10px" }}>{label}</th>)}</tr></thead>
+                                  <tbody>{adminDashboard.material_report.items.slice(0, 6).map((row) => (
+                                    <tr key={row.material}><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", color: "#334155", fontWeight: 650 }}>{row.material}<div style={{ marginTop: "3px", color: "#94a3b8", fontSize: "10px" }}>{row.observations} saved rate(s)</div></td><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{row.currency} {Number(row.latest_rate).toLocaleString("en-US", { maximumFractionDigits: 2 })}{row.unit ? ` / ${row.unit}` : ""}</td><td style={{ padding: "11px 7px", borderBottom: "1px solid #f1f5f9", color: row.change_percent > 0 ? "#b91c1c" : row.change_percent < 0 ? "#047857" : "#64748b", whiteSpace: "nowrap" }}>{row.change_percent == null ? "—" : `${row.change_percent > 0 ? "+" : ""}${row.change_percent}%`}</td></tr>
+                                  ))}</tbody>
+                                </table>
+                              </div>
+                            ) : <div style={{ padding: "15px", borderRadius: "10px", background: "#fffbeb", color: "#92400e", fontSize: "12px", lineHeight: 1.6 }}>No comparable material rates were found in saved BoQs yet. The full price history will become more useful after the material database is connected.</div>}
+                            <p style={{ margin: "14px 0 0", color: "#94a3b8", fontSize: "11px" }}>Historical observations only; not a live supplier price feed.</p>
+                          </section>
+                        </div>
+            )}
           </div>
-
-          <section style={{ marginTop: "20px", padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
-              <div><h2 style={{ margin: 0, fontSize: "17px" }}>Projects by location</h2><p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "12px" }}>Grouped records · newest estimates first</p></div>
-            </div>
-            {adminDashboardLoading && <p style={{ color: "#64748b", fontSize: "13px" }}>Loading projects…</p>}
-            {!adminDashboardLoading && (adminDashboard?.recent_projects || []).length === 0 && <div style={{ padding: "24px", textAlign: "center", border: "1px dashed #cbd5e1", borderRadius: "10px", color: "#64748b", fontSize: "13px" }}>No project records found.</div>}
-            {(() => {
-              const grouped = (adminDashboard?.recent_projects || []).reduce((acc, project) => {
-                const key = project.location && project.location !== "—" ? project.location.split(",").slice(-1)[0].trim() : "Location not recorded";
-                (acc[key] ||= []).push(project);
-                return acc;
-              }, {});
-              return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length).map(([province, projects]) => (
-                <details key={province} style={{ border: "1px solid #e2e8f0", borderRadius: "10px", marginTop: "10px", overflow: "hidden" }}>
-                  <summary style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", cursor: "pointer", padding: "13px 15px", background: "#f8fafc", color: "#334155", fontSize: "12px", fontWeight: 750 }}>{province}<span style={{ color: "#64748b", fontWeight: 600 }}>{projects.length} project(s)　⌄</span></summary>
-                  <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}><thead><tr>{["Project", "District / location", "Status", "Estimate", "Date", "BoQ"].map((label) => <th key={label} style={{ padding: "10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b", whiteSpace: "nowrap" }}>{label}</th>)}</tr></thead><tbody>{projects.map((project) => <tr key={project.estimate_id || project.plan_id}><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.project_name}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.location}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.status}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.total_cost == null ? "—" : `${project.currency || "USD"} ${Number(project.total_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.created_at ? new Date(project.created_at).toLocaleDateString() : "—"}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.estimate_id ? <button type="button" onClick={() => downloadBoqPdf(project.estimate_id, project.project_name)} style={{ padding: "6px 9px", border: "1px solid #bfdbfe", borderRadius: "7px", background: "#eff6ff", color: "#1d4ed8", cursor: "pointer", whiteSpace: "nowrap" }}>BoQ PDF</button> : "—"}</td></tr>)}</tbody></table></div>
-                </details>
-              ));
-            })()}
-          </section>
+          {activeAdminView === "overview" && (
+                      <section style={{ marginTop: "20px", padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
+                          <div><h2 style={{ margin: 0, fontSize: "17px" }}>Projects by location</h2><p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "12px" }}>Grouped records · newest estimates first</p></div>
+                        </div>
+                        {adminDashboardLoading && <p style={{ color: "#64748b", fontSize: "13px" }}>Loading projects…</p>}
+                        {!adminDashboardLoading && (adminDashboard?.recent_projects || []).length === 0 && <div style={{ padding: "24px", textAlign: "center", border: "1px dashed #cbd5e1", borderRadius: "10px", color: "#64748b", fontSize: "13px" }}>No project records found.</div>}
+                        {(() => {
+                          const grouped = (adminDashboard?.recent_projects || []).reduce((acc, project) => {
+                            const key = project.location && project.location !== "—" ? project.location.split(",").slice(-1)[0].trim() : "Location not recorded";
+                            (acc[key] ||= []).push(project);
+                            return acc;
+                          }, {});
+                          return Object.entries(grouped).sort((a, b) => b[1].length - a[1].length).map(([province, projects]) => (
+                            <details key={province} style={{ border: "1px solid #e2e8f0", borderRadius: "10px", marginTop: "10px", overflow: "hidden" }}>
+                              <summary style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "center", cursor: "pointer", padding: "13px 15px", background: "#f8fafc", color: "#334155", fontSize: "12px", fontWeight: 750 }}>{province}<span style={{ color: "#64748b", fontWeight: 600 }}>{projects.length} project(s)　⌄</span></summary>
+                              <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}><thead><tr>{["Project", "District / location", "Status", "Estimate", "Date", "BoQ"].map((label) => <th key={label} style={{ padding: "10px", textAlign: "left", borderBottom: "1px solid #e2e8f0", color: "#64748b", whiteSpace: "nowrap" }}>{label}</th>)}</tr></thead><tbody>{projects.map((project) => <tr key={project.estimate_id || project.plan_id}><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.project_name}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.location}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.status}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.total_cost == null ? "—" : `${project.currency || "USD"} ${Number(project.total_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" }}>{project.created_at ? new Date(project.created_at).toLocaleDateString() : "—"}</td><td style={{ padding: "10px", borderBottom: "1px solid #f1f5f9" }}>{project.estimate_id ? <button type="button" onClick={() => downloadBoqPdf(project.estimate_id, project.project_name)} style={{ padding: "6px 9px", border: "1px solid #bfdbfe", borderRadius: "7px", background: "#eff6ff", color: "#1d4ed8", cursor: "pointer", whiteSpace: "nowrap" }}>BoQ PDF</button> : "—"}</td></tr>)}</tbody></table></div>
+                            </details>
+                          ));
+                        })()}
+                      </section>
+            
+          )}
         </main>
         {showSignOutDialog && (
           <div role="presentation" onClick={() => setShowSignOutDialog(false)} style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", background: "rgba(15,23,42,.62)", backdropFilter: "blur(4px)" }}>

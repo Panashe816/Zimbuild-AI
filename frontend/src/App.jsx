@@ -1257,17 +1257,13 @@ function App() {
           </div>
         </div>
 
-        <p style={{ margin: "0 0 10px", color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.4px", textTransform: "uppercase" }}>Your workspace</p>
-        <h3 style={{ margin: 0, maxWidth: "680px", color: "#0f172a", fontSize: "clamp(27px, 3.3vw, 39px)", lineHeight: 1.18, letterSpacing: "-1.2px" }}>
-          Plan your build with clearer quantities and costs.
-        </h3>
         <p style={{ maxWidth: "690px", margin: "16px 0 0", color: "#64748b", fontSize: "15px", lineHeight: 1.8 }}>
           Upload a residential architectural plan, review the detected building information, and prepare a construction estimate and bill of quantities in one workspace.
         </p>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "28px" }}>
           <button type="button" onClick={startNewProject} style={{
-            minHeight: "52px", padding: "0 23px", display: "inline-flex", alignItems: "center", gap: "12px",
+            minHeight: "58px", padding: "0 30px", minWidth: "176px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px",
             border: "1px solid #0f172a", borderRadius: "10px", background: "#0f172a", color: "#ffffff",
             fontSize: "14px", fontWeight: 750, cursor: "pointer",
           }}>
@@ -1275,7 +1271,7 @@ function App() {
             New Project
           </button>
           <button type="button" onClick={() => setShowWhatWeDo((value) => !value)} aria-expanded={showWhatWeDo} style={{
-            minHeight: "52px", padding: "0 22px", display: "inline-flex", alignItems: "center", gap: "10px",
+            minHeight: "58px", padding: "0 30px", minWidth: "176px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
             border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
             fontSize: "14px", fontWeight: 700, cursor: "pointer",
           }}>

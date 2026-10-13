@@ -2580,7 +2580,7 @@ function App() {
                           </section>
             )}
           </div>
-          {activeAdminView === "overview" && (
+          {activeAdminView === "projects" && (
                       <section style={{ marginTop: "20px", padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "16px" }}>
                           <div><h2 style={{ margin: 0, fontSize: "17px" }}>Projects by location</h2><p style={{ margin: "5px 0 0", color: "#64748b", fontSize: "12px" }}>Grouped records · newest estimates first</p></div>

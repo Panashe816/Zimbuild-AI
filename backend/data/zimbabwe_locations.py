@@ -172,6 +172,7 @@ ZIMBABWE_LOCATIONS: dict[str, dict[str, Any]] = {
             "Chirumhanzu": GROWTH_POINT_RURAL_FARM,
             "Gokwe North": GROWTH_POINT_RURAL_FARM,
             "Gokwe South": GROWTH_POINT_RURAL_FARM,
+            "Gweru": CITY_BIG_TOWN,
             "Gweru Rural": GROWTH_POINT_RURAL_FARM,
             "Gweru Urban": CITY_BIG_TOWN,
             "Kwekwe": SMALL_TOWN,

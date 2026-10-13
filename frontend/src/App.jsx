@@ -2458,6 +2458,7 @@ function App() {
               { id: "locations", label: "Construction by location", icon: "⌖" },
               { id: "costs", label: "Building cost & BoQ", icon: "▥" },
               { id: "materials", label: "Material price trends", icon: "↗" },
+              { id: "projects", label: "Projects by location", icon: "⌂" },
             ].map((item) => (
               <button key={item.id} type="button" onClick={() => setActiveAdminView(item.id)} style={{ width: "100%", textAlign: "left", padding: "12px 10px", borderRadius: "9px", border: "1px solid transparent", background: activeAdminView === item.id ? "#fff" : "transparent", color: activeAdminView === item.id ? "#0f172a" : "#cbd5e1", fontSize: "12px", fontWeight: activeAdminView === item.id ? 800 : 600, cursor: "pointer" }}>{item.icon} &nbsp; {item.label}</button>
             ))}

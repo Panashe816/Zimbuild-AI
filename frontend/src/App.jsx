@@ -2577,7 +2577,6 @@ function App() {
                             ) : <div style={{ padding: "15px", borderRadius: "10px", background: "#fffbeb", color: "#92400e", fontSize: "12px", lineHeight: 1.6 }}>No comparable material rates were found in saved BoQs yet. The full price history will become more useful after the material database is connected.</div>}
                             <p style={{ margin: "14px 0 0", color: "#94a3b8", fontSize: "11px" }}>Historical observations only; not a live supplier price feed.</p>
                           </section>
-                        </div>
             )}
           </div>
           {activeAdminView === "overview" && (

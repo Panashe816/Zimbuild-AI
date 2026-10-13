@@ -1263,7 +1263,7 @@ function App() {
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "28px" }}>
           <button type="button" onClick={startNewProject} style={{
-            minHeight: "58px", padding: "0 30px", minWidth: "176px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px",
+            minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px",
             border: "1px solid #0f172a", borderRadius: "10px", background: "#0f172a", color: "#ffffff",
             fontSize: "14px", fontWeight: 750, cursor: "pointer",
           }}>
@@ -1271,7 +1271,7 @@ function App() {
             New Project
           </button>
           <button type="button" onClick={() => setShowWhatWeDo((value) => !value)} aria-expanded={showWhatWeDo} style={{
-            minHeight: "58px", padding: "0 30px", minWidth: "176px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
+            minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
             border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
             fontSize: "14px", fontWeight: 700, cursor: "pointer",
           }}>

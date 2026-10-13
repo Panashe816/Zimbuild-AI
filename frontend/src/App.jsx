@@ -1186,7 +1186,8 @@ function App() {
         </button>
 
         <button
-          className="nav-item"
+          type="button"
+          className={`nav-item ${step === 1 ? "active" : ""}`}
           onClick={startNewProject}
         >
           <span>＋</span>

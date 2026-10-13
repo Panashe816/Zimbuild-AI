@@ -1909,12 +1909,6 @@ function App() {
 
       <div className="notice-box">
         <strong>Location confirmed: {location || "Not selected"}</strong>
-        <span>
-          ZimBuild AI uses the province and district selected in Step 1 to apply
-          the existing location pricing profile automatically. You do not need
-          to select a city, small town or rural category again.
-          {selectedLocation?.description ? ` Default profile: ${selectedLocation.description}.` : ""}
-        </span>
       </div>
 
       {errorMessage && (
@@ -2259,40 +2253,7 @@ function App() {
           </div>
         </section>
 
-        <section className="result-card">
-          <div className="results-section-header">
-            <div>
-              <p className="eyebrow">Project information</p>
-              <h3>Estimate configuration</h3>
-            </div>
-          </div>
 
-          <div className="analysis-summary-grid">
-            <div>
-              <span>Location</span>
-              <strong>{location}</strong>
-            </div>
-
-            <div>
-              <span>Location type</span>
-              <strong>
-                {selectedLocation.label}
-              </strong>
-            </div>
-
-            <div>
-              <span>Wall height</span>
-              <strong>{wallHeight} m</strong>
-            </div>
-
-            <div>
-              <span>Plan scale</span>
-              <strong>
-                {result?.scale?.scale_label || `1:${scaleRatio}`}
-              </strong>
-            </div>
-          </div>
-        </section>
       </>
     );
   };

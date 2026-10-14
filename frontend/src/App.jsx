@@ -1270,7 +1270,7 @@ function App() {
 
   const openClientReport = (view) => {
     setActiveClientView(view);
-    setStep(view === "overview" ? 5 : 6);
+    setStep(6);
     if (!userProjects.length) loadUserProjects();
   };
 

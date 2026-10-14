@@ -1403,39 +1403,7 @@ function App() {
 
   const renderProjectStep = () => (
     <>
-      <section className="notice-box" style={{ marginBottom: "22px" }}>
-        <strong>New project</strong>
-        <span>Enter your project details and upload a residential architectural plan to generate quantities, costs and a bill of quantities.</span>
-      </section>
-
       <section className="project-card">
-        <div className="card-header">
-          <div>
-            <p className="eyebrow">
-              Step 1
-            </p>
-
-            <h3>
-              Analyse your architectural plan
-            </h3>
-          </div>
-
-          <span className="field-help">Step {step} of 3</span>
-        </div>
-
-        <div className="notice-box">
-          <strong>
-            Residential plans only
-          </strong>
-
-          <span>
-            ZimBuild AI is designed for
-            residential architectural plans.
-            Roofs are currently not detected
-            or included in the construction
-            estimate.
-          </span>
-        </div>
 
         <form
           onSubmit={handleProjectSubmit}
@@ -2243,13 +2211,10 @@ function App() {
           </div>
 
           <div style={{ width: "100%", marginBottom: "26px" }}>
-            <p style={{ margin: "0 0 12px", color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.8px", textTransform: "uppercase" }}>
-              {adminLoginOpen ? "Secure administrator access" : "Welcome to ZimBuild AI"}
-            </p>
-            {adminLoginOpen && (
-              <h2 style={{ margin: 0, color: "#0f172a", fontSize: "24px", lineHeight: 1.3, letterSpacing: "-0.45px", fontWeight: 700 }}>
-                administrator login
-              </h2>
+            {!adminLoginOpen && (
+              <p style={{ margin: 0, color: "#2563eb", fontSize: "11px", fontWeight: 800, letterSpacing: "1.8px", textTransform: "uppercase" }}>
+                Welcome to ZimBuild AI
+              </p>
             )}
           </div>
 

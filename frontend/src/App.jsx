@@ -1637,83 +1637,11 @@ function App() {
       <section className="project-card details-card">
       <div className="card-header">
         <div>
-          <p className="eyebrow">
-            Map analysis complete
-          </p>
-
-          <h3>
-            Please enter some additional details
-          </h3>
-
-          <p className="card-subtitle">
-            Some construction information may
-            not be fully visible or reliably
-            measurable from the architectural
-            drawing. The values below are
-            pre-filled with recommended defaults.
-          </p>
+          
         </div>
       </div>
 
-      <div className="notice-box">
-        <strong>
-          Visualisation complete
-        </strong>
-
-        <span>
-          ZimBuild AI has analysed the uploaded
-          plan. Please review the additional
-          construction details below. You can
-          change any value where you have more
-          accurate information.
-        </span>
-      </div>
-
-      <div className="calibration-section">
-        <p className="section-label">
-          Drawing scale
-        </p>
-
-        <div className="form-group">
-          <label htmlFor="scaleRatio">
-            Architectural drawing scale
-          </label>
-
-          <select
-            id="scaleRatio"
-            value={scaleRatio}
-            onChange={(event) =>
-              setScaleRatio(
-                event.target.value
-              )
-            }
-          >
-            <option value="50">
-              1:50
-            </option>
-
-            <option value="100">
-              1:100
-            </option>
-
-            <option value="200">
-              1:200
-            </option>
-
-            <option value="500">
-              1:500
-            </option>
-          </select>
-
-          <span className="field-help">
-            If the scale shown on the drawing
-            is different, select the matching
-            value.
-          </span>
-        </div>
-      </div>
-
-      <div className="calibration-section">
+        <div className="calibration-section">
         <p className="section-label">
           Construction parameters
         </p>
@@ -2461,17 +2389,6 @@ function App() {
             ))}
           </div>
 
-          {activeAdminView === "overview" && (
-            <section style={{ marginTop: "22px", padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>
-              <h2 style={{ margin: "0 0 6px", fontSize: "18px" }}>Reports</h2>
-              <p style={{ margin: "0 0 18px", color: "#64748b", fontSize: "12px" }}>Choose a report to view details or export it as PDF.</p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
-                <button type="button" onClick={() => setActiveAdminView("locations")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>⌖</span><strong style={{ display: "block", fontSize: "13px" }}>Construction by location</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Compare project activity by province and district.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
-                <button type="button" onClick={() => setActiveAdminView("costs")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>▥</span><strong style={{ display: "block", fontSize: "13px" }}>Building cost & BoQ</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Review average and median estimated construction costs.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
-                <button type="button" onClick={() => setActiveAdminView("materials")} style={{ textAlign: "left", padding: "18px", minHeight: "112px", border: "1px solid #dbe3ed", borderRadius: "11px", background: "#f8fafc", color: "#0f172a", cursor: "pointer" }}><span style={{ display: "block", fontSize: "20px", color: "#2563eb", marginBottom: "10px" }}>↗</span><strong style={{ display: "block", fontSize: "13px" }}>Material price observations</strong><span style={{ display: "block", marginTop: "6px", fontSize: "11px", lineHeight: 1.5, color: "#64748b" }}>Review material rates recorded in saved BoQs.</span><span style={{ display: "inline-block", marginTop: "12px", fontSize: "11px", fontWeight: 800, color: "#1d4ed8" }}>View report →</span></button>
-              </div>
-            </section>
-          )}
           <div style={{ display: activeAdminView === "overview" ? "none" : "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: "18px", marginTop: "20px" }}>
             {activeAdminView === "locations" && (
               <section style={{ minWidth: 0, padding: "22px", borderRadius: "15px", border: "1px solid #e2e8f0", background: "#fff" }}>

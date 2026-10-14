@@ -1373,14 +1373,6 @@ function App() {
             <span aria-hidden="true" style={{ fontSize: "20px", lineHeight: 1 }}>＋</span>
             New Project
           </button>
-          <button type="button" onClick={() => setShowWhatWeDo((value) => !value)} aria-expanded={showWhatWeDo} style={{
-            minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
-            border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
-            fontSize: "14px", fontWeight: 700, cursor: "pointer",
-          }}>
-            {showWhatWeDo ? "Hide details" : "What we do"}
-            <span aria-hidden="true">{showWhatWeDo ? "−" : "＋"}</span>
-          </button>
           <button type="button" onClick={() => { setStep(4); loadUserProjects(); }} style={{
             minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
             border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
@@ -1403,14 +1395,7 @@ function App() {
           ))}
         </div>
 
-        {showWhatWeDo && (
-          <div style={{ marginTop: "22px", padding: "20px 22px", borderRadius: "12px", border: "1px solid #bfdbfe", background: "#f8fbff" }}>
-            <h4 style={{ margin: "0 0 8px", color: "#0f172a", fontSize: "16px" }}>From architectural plan to cost estimate</h4>
-            <p style={{ margin: 0, color: "#475569", fontSize: "14px", lineHeight: 1.8 }}>
-              ZimBuild AI analyses a residential plan, helps identify building elements and quantities, then uses project details to prepare estimated material requirements and construction costs. You can review your results, revisit saved estimates, and download an available bill of quantities as a PDF. Estimates should be checked by a qualified construction professional before building or purchasing materials.
-            </p>
-          </div>
-        )}
+
       </section>
 
 

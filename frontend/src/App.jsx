@@ -87,6 +87,8 @@ function App() {
   const [userProjects, setUserProjects] = useState([]);
   const [userProjectsLoading, setUserProjectsLoading] = useState(false);
   const [userProjectsError, setUserProjectsError] = useState("");
+  const [activeClientView, setActiveClientView] = useState("overview");
+  const [selectedClientProjectId, setSelectedClientProjectId] = useState("");
   const googleButtonRef = useRef(null);
 
   // -----------------------------------------------------------------------
@@ -1232,6 +1234,24 @@ function App() {
         </button>
       </nav>
 
+      <div style={{ padding: "12px 14px 4px", color: "#94a3b8", fontSize: "10px", fontWeight: 800, letterSpacing: "1px" }}>MY REPORTS</div>
+      <nav className="sidebar-nav" aria-label="Construction reports">
+        {[
+          { id: "overview", label: "Construction overview", icon: "▦" },
+          { id: "costs", label: "Cost breakdown", icon: "▥" },
+          { id: "materials", label: "Materials & quantities", icon: "▤" },
+          { id: "compare", label: "Compare my projects", icon: "⇄" },
+        ].map((item) => (
+          <button key={item.id} type="button" className={`nav-item ${step === 6 && activeClientView === item.id ? "active" : ""}`} onClick={() => {
+            setActiveClientView(item.id);
+            setStep(6);
+            if (!userProjects.length) loadUserProjects();
+          }}>
+            <span>{item.icon}</span>{item.label}
+          </button>
+        ))}
+      </nav>
+
       <div className="sidebar-footer">
         <p>
           Automated BoQ
@@ -1247,6 +1267,91 @@ function App() {
   // -----------------------------------------------------------------------
   // Dashboard home - focused app experience
   // -----------------------------------------------------------------------
+
+  const openClientReport = (view) => {
+    setActiveClientView(view);
+    setStep(view === "overview" ? 5 : 6);
+    if (!userProjects.length) loadUserProjects();
+  };
+
+  const clientMoney = (project) => project?.total_cost == null ? "Not estimated" : `${project.currency || "USD"} ${Number(project.total_cost).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const reportRowsFor = (view, project) => {
+    const result = project?.result || {};
+    const totals = result.totals || {};
+    const materials = result.materials || result.material_quantities || result.quantities?.materials || [];
+    if (view === "overview") return [
+      ["Metric", "Value"], ["Total projects", userProjects.length],
+      ["Completed estimates", userProjects.filter((p) => p.total_cost != null).length],
+      ["Projects awaiting estimate", userProjects.filter((p) => p.total_cost == null).length],
+      ["Latest project", userProjects[0]?.project_name || "—"],
+      ["Latest estimated cost", userProjects[0] ? clientMoney(userProjects[0]) : "—"],
+    ];
+    if (view === "costs") return [
+      ["Cost item", "Estimated amount"],
+      ["Project", project?.project_name || "—"],
+      ["Location", project?.location || "—"],
+      ["Total estimated cost", clientMoney(project)],
+      ...Object.entries(totals).filter(([key, value]) => typeof value === "number" && /material|labour|labor|transport|grand|total/i.test(key)).map(([key, value]) => [key.replace(/_/g, " "), `${project?.currency || "USD"} ${Number(value).toLocaleString("en-US", {minimumFractionDigits:2,maximumFractionDigits:2})}`]),
+    ];
+    if (view === "materials") {
+      const rows = [["Material", "Quantity", "Unit", "Rate", "Total"]];
+      const items = Array.isArray(materials) ? materials : Object.entries(materials).map(([name, value]) => ({ material: name, ...(typeof value === "object" ? value : { quantity: value }) }));
+      items.forEach((item) => rows.push([item.material || item.name || item.description || "Material", item.quantity ?? item.qty ?? "—", item.unit || "—", item.unit_rate ?? item.rate ?? "—", item.total_cost ?? item.total ?? "—"]));
+      return rows;
+    }
+    return [["Project", "Location", "Status", "Currency", "Estimated cost", "Date"], ...userProjects.map((p) => [p.project_name, p.location || "—", p.status || "—", p.currency || "USD", p.total_cost ?? "Not estimated", p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"])];
+  };
+
+  const downloadClientReport = (view) => {
+    const project = userProjects.find((p) => String(p.estimate_id || p.plan_id) === String(selectedClientProjectId)) || userProjects.find((p) => p.total_cost != null) || userProjects[0];
+    const rows = reportRowsFor(view, project);
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["\\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `ZimBuild_${view}_report.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const renderClientReport = () => {
+    const project = userProjects.find((p) => String(p.estimate_id || p.plan_id) === String(selectedClientProjectId)) || userProjects.find((p) => p.total_cost != null) || userProjects[0];
+    const titles = { overview: "Construction overview", costs: "Construction cost breakdown", materials: "Materials and quantities report", compare: "Compare my projects" };
+    const rows = reportRowsFor(activeClientView, project);
+    const moneyRows = activeClientView === "compare" ? [] : rows.slice(1);
+    return (
+      <section style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gap: "20px" }}>
+        <div style={{ padding: "24px 26px", borderRadius: "16px", background: "linear-gradient(120deg,#eff6ff,#ffffff)", border: "1px solid #dbeafe", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+          <div><p className="eyebrow">MY CONSTRUCTION REPORTS</p><h2 style={{ margin: "6px 0", color: "#0f172a", fontSize: "25px" }}>{titles[activeClientView]}</h2><p style={{ margin: 0, color: "#64748b", fontSize: "13px" }}>Based on your saved project and estimate data.</p></div>
+          <button type="button" onClick={() => downloadClientReport(activeClientView)} className="primary-button">Download report (CSV) ↓</button>
+        </div>
+        {(activeClientView === "costs" || activeClientView === "materials") && (
+          <div className="project-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", flexWrap: "wrap" }}>
+            <label htmlFor="clientReportProject" style={{ fontWeight: 700 }}>Select project</label>
+            <select id="clientReportProject" value={selectedClientProjectId} onChange={(event) => setSelectedClientProjectId(event.target.value)} style={{ minWidth: "260px", maxWidth: "100%", padding: "12px", border: "1px solid #cbd5e1", borderRadius: "9px" }}>
+              <option value="">Latest available estimate</option>
+              {userProjects.map((p) => <option key={p.estimate_id || p.plan_id} value={String(p.estimate_id || p.plan_id)}>{p.project_name}</option>)}
+            </select>
+          </div>
+        )}
+        {userProjectsLoading ? <div className="project-card">Loading your project data…</div> : userProjectsError ? <div className="error-message">{userProjectsError}</div> : userProjects.length === 0 ? <div className="project-card"><h3>No saved projects yet</h3><p>Complete and save an estimate to populate your construction reports.</p><button type="button" className="primary-button" onClick={startNewProject}>Create a project</button></div> : (
+          <div className="project-card">
+            {activeClientView === "overview" && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "14px", marginBottom: "20px" }}>
+              {[{label:"My projects",value:userProjects.length},{label:"Completed estimates",value:userProjects.filter((p)=>p.total_cost!=null).length},{label:"Awaiting estimate",value:userProjects.filter((p)=>p.total_cost==null).length},{label:"Latest estimate",value:clientMoney(userProjects[0])}].map((item)=><div key={item.label} style={{ padding:"18px", border:"1px solid #e2e8f0", borderRadius:"12px", background:"#f8fafc" }}><div style={{fontSize:"12px",color:"#64748b"}}>{item.label}</div><div style={{fontSize:"22px",fontWeight:800,color:"#0f172a",marginTop:"10px"}}>{item.value}</div></div>)}
+            </div>}
+            {(activeClientView === "costs" || activeClientView === "materials") && <h3 style={{marginTop:0}}>{project?.project_name || "Selected project"} · {project?.location || "Location not recorded"}</h3>}
+            <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:"13px"}}><thead><tr>{rows[0].map((cell,i)=><th key={i} style={{textAlign:"left",padding:"12px",background:"#f1f5f9",color:"#334155",borderBottom:"1px solid #e2e8f0"}}>{cell}</th>)}</tr></thead><tbody>{rows.slice(1).map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j} style={{padding:"12px",borderBottom:"1px solid #e2e8f0",color:"#334155"}}>{String(cell ?? "—")}</td>)}</tr>)}</tbody></table></div>
+            {activeClientView === "costs" && <div style={{marginTop:"20px",padding:"16px",borderRadius:"10px",background:"#f8fafc",color:"#64748b",fontSize:"12px"}}>Cost categories are shown only when they are present in the saved estimate data. Check the BoQ for the complete cost calculation.</div>}
+            {activeClientView === "materials" && <div style={{marginTop:"16px"}}><button type="button" className="secondary-button" disabled={!project?.estimate_id} onClick={() => downloadBoqPdf(project?.estimate_id,project?.project_name)}>Download full BoQ PDF</button><p style={{fontSize:"12px",color:"#64748b"}}>The CSV report contains the available material records; the BoQ PDF provides the full saved estimate.</p></div>}
+          </div>
+        )}
+      </section>
+    );
+  };
 
   const renderDashboardHome = () => (
     <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
@@ -1283,6 +1388,19 @@ function App() {
           }}>
             Projects
           </button>
+          {[
+            { id: "overview", label: "Construction overview", detail: "Project counts and latest estimate", icon: "▦" },
+            { id: "costs", label: "Construction cost breakdown", detail: "Review estimated costs by project", icon: "▥" },
+            { id: "materials", label: "Materials & quantities report", detail: "Review quantities and download your BoQ", icon: "▤" },
+            { id: "compare", label: "Compare my projects", detail: "Compare saved projects and estimates", icon: "⇄" },
+          ].map((item) => (
+            <button key={item.id} type="button" onClick={() => openClientReport(item.id)} style={{ textAlign: "left", minHeight: "100px", padding: "16px 18px", border: "1px solid #dbe3ed", borderRadius: "12px", background: "#f8fafc", color: "#0f172a", cursor: "pointer", flex: "1 1 220px" }}>
+              <span style={{ display: "block", color: "#2563eb", fontSize: "20px", marginBottom: "8px" }}>{item.icon}</span>
+              <strong style={{ display: "block", fontSize: "13px" }}>{item.label}</strong>
+              <span style={{ display: "block", marginTop: "6px", color: "#64748b", fontSize: "11px", lineHeight: 1.5 }}>{item.detail}</span>
+              <span style={{ display: "block", marginTop: "10px", color: "#1d4ed8", fontSize: "11px", fontWeight: 800 }}>Open report →</span>
+            </button>
+          ))}
         </div>
 
         {showWhatWeDo && (
@@ -2471,6 +2589,9 @@ function App() {
 
         {step === 5 &&
           renderDashboardHome()}
+
+        {step === 6 &&
+          renderClientReport()}
 
         {step === 1 &&
           renderProjectStep()}

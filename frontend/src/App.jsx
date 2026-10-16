@@ -1381,19 +1381,6 @@ function App() {
           ))}
         </div>
 
-        <h2 style={{ margin: "0 0 14px", fontSize: "20px", color: "#0f172a" }}>Quick actions</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "16px" }}>
-          <button type="button" onClick={startNewProject} style={{ minHeight: "96px", padding: "20px 24px", display: "flex", alignItems: "center", gap: "18px", textAlign: "left", border: "1px solid #1d4ed8", borderRadius: "12px", background: "#155eef", color: "#ffffff", cursor: "pointer" }}>
-            <span aria-hidden="true" style={{ width: "46px", height: "46px", flexShrink: 0, display: "grid", placeItems: "center", borderRadius: "50%", background: "#ffffff", color: "#155eef", fontSize: "30px", fontWeight: 700 }}>＋</span>
-            <span style={{ flex: 1, fontSize: "19px", fontWeight: 750 }}>New Project</span>
-            <span aria-hidden="true" style={{ fontSize: "27px" }}>→</span>
-          </button>
-          <button type="button" onClick={() => { setStep(4); loadUserProjects(); }} style={{ minHeight: "96px", padding: "20px 24px", display: "flex", alignItems: "center", gap: "18px", textAlign: "left", border: "1px solid #dbe3ed", borderRadius: "12px", background: "#ffffff", color: "#0f172a", cursor: "pointer" }}>
-            <span aria-hidden="true" style={{ width: "46px", height: "46px", flexShrink: 0, display: "grid", placeItems: "center", borderRadius: "12px", background: "#e8efff", color: "#2563eb", fontSize: "23px" }}>▰</span>
-            <span style={{ flex: 1, fontSize: "19px", fontWeight: 750 }}>Recent Projects</span>
-            <span aria-hidden="true" style={{ fontSize: "27px", color: "#1e40af" }}>→</span>
-          </button>
-        </div>
       </div>
     );
   };
@@ -1456,10 +1443,6 @@ function App() {
           <div>
             <p className="eyebrow">AI plan analysis</p>
             <h3 id="vision-summary-heading">Detected building information</h3>
-            <p className="card-subtitle">
-              Review these preliminary detections and adjust the construction
-              parameters below where you have more accurate information.
-            </p>
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
@@ -1489,9 +1472,6 @@ function App() {
             </label>
           ))}
         </div>
-        <p className="field-help" style={{ marginTop: "14px" }}>
-          Computer vision results are estimates and should be checked against the original drawing.
-        </p>
       </section>
     );
   };

@@ -1279,7 +1279,9 @@ function App() {
   const reportRowsFor = (view, project) => {
     const result = project?.result || {};
     const totals = result.totals || {};
-    const materials = result.materials || result.material_quantities || result.quantities?.materials || [];
+    const phase12 = result.phase12 || result.phase_12 || result.boq || result.bill_of_quantities || {};
+    const materialSource = result.materials || result.material_quantities || result.quantities?.materials || phase12.materials || phase12.items || phase12.rows || result.items || result.boq_items || [];
+    const materials = Array.isArray(materialSource) ? materialSource : (materialSource && typeof materialSource === "object" ? Object.entries(materialSource).map(([name, value]) => ({ material: name, ...(value && typeof value === "object" ? value : { quantity: value }) })) : []);
     if (view === "overview") return [
       ["Metric", "Value"], ["Total projects", userProjects.length],
       ["Completed estimates", userProjects.filter((p) => p.total_cost != null).length],
@@ -1296,8 +1298,7 @@ function App() {
     ];
     if (view === "materials") {
       const rows = [["Material", "Quantity", "Unit", "Rate", "Total"]];
-      const items = Array.isArray(materials) ? materials : Object.entries(materials).map(([name, value]) => ({ material: name, ...(typeof value === "object" ? value : { quantity: value }) }));
-      items.forEach((item) => rows.push([item.material || item.name || item.description || "Material", item.quantity ?? item.qty ?? "—", item.unit || "—", item.unit_rate ?? item.rate ?? "—", item.total_cost ?? item.total ?? "—"]));
+      materials.forEach((item) => rows.push([item.material || item.name || item.description || item.item || item.material_name || "Material", item.quantity ?? item.qty ?? item.amount_quantity ?? "—", item.unit || item.units || item.uom || item.measurement_unit || "—", item.unit_rate ?? item.rate ?? item.rate_per_unit ?? "—", item.total_cost ?? item.total ?? item.amount ?? "—"]));
       return rows;
     }
     return [["Project", "Location", "Status", "Currency", "Estimated cost", "Date"], ...userProjects.map((p) => [p.project_name, p.location || "—", p.status || "—", p.currency || "USD", p.total_cost ?? "Not estimated", p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"])];
@@ -1327,7 +1328,7 @@ function App() {
       <section style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gap: "20px" }}>
         <div style={{ padding: "24px 26px", borderRadius: "16px", background: "linear-gradient(120deg,#eff6ff,#ffffff)", border: "1px solid #dbeafe", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
           <div><p className="eyebrow">MY CONSTRUCTION REPORTS</p><h2 style={{ margin: "6px 0", color: "#0f172a", fontSize: "25px" }}>{titles[activeClientView]}</h2><p style={{ margin: 0, color: "#64748b", fontSize: "13px" }}>Based on your saved project and estimate data.</p></div>
-          <button type="button" onClick={() => downloadClientReport(activeClientView)} className="primary-button">Download report (CSV) ↓</button>
+          {activeClientView !== "materials" && <button type="button" onClick={() => downloadClientReport(activeClientView)} className="primary-button">Download report (CSV) ↓</button>}
         </div>
         {(activeClientView === "costs" || activeClientView === "materials") && (
           <div className="project-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", flexWrap: "wrap" }}>
@@ -1344,63 +1345,58 @@ function App() {
               {[{label:"My projects",value:userProjects.length},{label:"Completed estimates",value:userProjects.filter((p)=>p.total_cost!=null).length},{label:"Awaiting estimate",value:userProjects.filter((p)=>p.total_cost==null).length},{label:"Latest estimate",value:clientMoney(userProjects[0])}].map((item)=><div key={item.label} style={{ padding:"18px", border:"1px solid #e2e8f0", borderRadius:"12px", background:"#f8fafc" }}><div style={{fontSize:"12px",color:"#64748b"}}>{item.label}</div><div style={{fontSize:"22px",fontWeight:800,color:"#0f172a",marginTop:"10px"}}>{item.value}</div></div>)}
             </div>}
             {(activeClientView === "costs" || activeClientView === "materials") && <h3 style={{marginTop:0}}>{project?.project_name || "Selected project"} · {project?.location || "Location not recorded"}</h3>}
-            <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:"13px"}}><thead><tr>{rows[0].map((cell,i)=><th key={i} style={{textAlign:"left",padding:"12px",background:"#f1f5f9",color:"#334155",borderBottom:"1px solid #e2e8f0"}}>{cell}</th>)}</tr></thead><tbody>{rows.slice(1).map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j} style={{padding:"12px",borderBottom:"1px solid #e2e8f0",color:"#334155"}}>{String(cell ?? "—")}</td>)}</tr>)}</tbody></table></div>
+            <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:"13px",color:"#111827"}}><thead><tr>{rows[0].map((cell,i)=><th key={i} style={{textAlign:"left",padding:"12px",background:"#f1f5f9",color:"#111827",fontWeight:750,borderBottom:"1px solid #d1d5db"}}>{cell}</th>)}</tr></thead><tbody>{rows.slice(1).map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j} style={{padding:"12px",borderBottom:"1px solid #e5e7eb",color:"#111827"}}>{String(cell ?? "—")}</td>)}</tr>)}</tbody></table></div>
             {activeClientView === "costs" && <div style={{marginTop:"20px",padding:"16px",borderRadius:"10px",background:"#f8fafc",color:"#64748b",fontSize:"12px"}}>Cost categories are shown only when they are present in the saved estimate data. Check the BoQ for the complete cost calculation.</div>}
-            {activeClientView === "materials" && <div style={{marginTop:"16px"}}><button type="button" className="secondary-button" disabled={!project?.estimate_id} onClick={() => downloadBoqPdf(project?.estimate_id,project?.project_name)}>Download full BoQ PDF</button><p style={{fontSize:"12px",color:"#64748b"}}>The CSV report contains the available material records; the BoQ PDF provides the full saved estimate.</p></div>}
+            {activeClientView === "materials" && <div style={{marginTop:"16px"}}><button type="button" className="secondary-button" disabled={!project?.estimate_id} onClick={() => downloadBoqPdf(project?.estimate_id,project?.project_name)}>Download full BoQ PDF</button></div>}
           </div>
         )}
       </section>
     );
   };
 
-  const renderDashboardHome = () => (
-    <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-      <section style={{
-        padding: "clamp(24px, 4vw, 42px)",
-        border: "1px solid #e2e8f0",
-        borderRadius: "18px",
-        background: "#ffffff",
-        boxShadow: "0 8px 26px rgba(15, 23, 42, 0.04)",
-      }}>
+  const renderDashboardHome = () => {
+    const completedEstimates = userProjects.filter((project) => project.total_cost != null).length;
+    const latestProject = userProjects.find((project) => project.total_cost != null) || userProjects[0];
+    const latestCost = latestProject?.total_cost == null
+      ? "—"
+      : `${latestProject.currency || "USD"} ${Number(latestProject.total_cost).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
+    const summaryCards = [
+      { label: "My projects", value: userProjects.length, icon: "▰", tint: "#e8efff", accent: "#2563eb" },
+      { label: "Completed estimates", value: completedEstimates, icon: "▤", tint: "#ddf7ee", accent: "#059669" },
+      { label: "Latest estimated costs", value: latestCost, icon: "$", tint: "#eee6ff", accent: "#6d28d9" },
+    ];
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", marginTop: "28px" }}>
-          <button type="button" onClick={startNewProject} style={{
-            minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px",
-            border: "1px solid #0f172a", borderRadius: "10px", background: "#0f172a", color: "#ffffff",
-            fontSize: "14px", fontWeight: 750, cursor: "pointer",
-          }}>
-            <span aria-hidden="true" style={{ fontSize: "20px", lineHeight: 1 }}>＋</span>
-            New Project
-          </button>
-          <button type="button" onClick={() => { setStep(4); loadUserProjects(); }} style={{
-            minHeight: "60px", padding: "0 38px", minWidth: "205px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "10px",
-            border: "1px solid #cbd5e1", borderRadius: "10px", background: "#ffffff", color: "#0f172a",
-            fontSize: "14px", fontWeight: 700, cursor: "pointer",
-          }}>
-            Projects
-          </button>
-          {[
-            { id: "overview", label: "Construction overview", detail: "Project counts and latest estimate", icon: "▦" },
-            { id: "costs", label: "Construction cost breakdown", detail: "Review estimated costs by project", icon: "▥" },
-            { id: "materials", label: "Materials & quantities report", detail: "Review quantities and download your BoQ", icon: "▤" },
-            { id: "compare", label: "Compare my projects", detail: "Compare saved projects and estimates", icon: "⇄" },
-          ].map((item) => (
-            <button key={item.id} type="button" onClick={() => openClientReport(item.id)} style={{ textAlign: "left", minHeight: "100px", padding: "16px 18px", border: "1px solid #dbe3ed", borderRadius: "12px", background: "#f8fafc", color: "#0f172a", cursor: "pointer", flex: "1 1 220px" }}>
-              <span style={{ display: "block", color: "#2563eb", fontSize: "20px", marginBottom: "8px" }}>{item.icon}</span>
-              <strong style={{ display: "block", fontSize: "13px" }}>{item.label}</strong>
-              <span style={{ display: "block", marginTop: "6px", color: "#64748b", fontSize: "11px", lineHeight: 1.5 }}>{item.detail}</span>
-              <span style={{ display: "block", marginTop: "10px", color: "#1d4ed8", fontSize: "11px", fontWeight: 800 }}>Open report →</span>
-            </button>
+    return (
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "16px", marginBottom: "28px" }}>
+          {summaryCards.map((card) => (
+            <section key={card.label} style={{ minWidth: 0, minHeight: "142px", display: "flex", alignItems: "center", gap: "18px", padding: "22px", background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "14px", boxShadow: "0 5px 18px rgba(15,23,42,0.035)" }}>
+              <div aria-hidden="true" style={{ width: "54px", height: "54px", flexShrink: 0, display: "grid", placeItems: "center", borderRadius: "13px", background: card.tint, color: card.accent, fontSize: "27px", fontWeight: 800 }}>{card.icon}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "#0f172a", marginBottom: "9px" }}>{card.label}</div>
+                <div style={{ fontSize: "clamp(19px, 2vw, 25px)", lineHeight: 1.2, fontWeight: 750, color: card.accent, overflowWrap: "anywhere" }}>{card.value}</div>
+              </div>
+            </section>
           ))}
         </div>
 
-
-      </section>
-
-
-    </div>
-  );
+        <h2 style={{ margin: "0 0 14px", fontSize: "20px", color: "#0f172a" }}>Quick actions</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "16px" }}>
+          <button type="button" onClick={startNewProject} style={{ minHeight: "96px", padding: "20px 24px", display: "flex", alignItems: "center", gap: "18px", textAlign: "left", border: "1px solid #1d4ed8", borderRadius: "12px", background: "#155eef", color: "#ffffff", cursor: "pointer" }}>
+            <span aria-hidden="true" style={{ width: "46px", height: "46px", flexShrink: 0, display: "grid", placeItems: "center", borderRadius: "50%", background: "#ffffff", color: "#155eef", fontSize: "30px", fontWeight: 700 }}>＋</span>
+            <span style={{ flex: 1, fontSize: "19px", fontWeight: 750 }}>New Project</span>
+            <span aria-hidden="true" style={{ fontSize: "27px" }}>→</span>
+          </button>
+          <button type="button" onClick={() => { setStep(4); loadUserProjects(); }} style={{ minHeight: "96px", padding: "20px 24px", display: "flex", alignItems: "center", gap: "18px", textAlign: "left", border: "1px solid #dbe3ed", borderRadius: "12px", background: "#ffffff", color: "#0f172a", cursor: "pointer" }}>
+            <span aria-hidden="true" style={{ width: "46px", height: "46px", flexShrink: 0, display: "grid", placeItems: "center", borderRadius: "12px", background: "#e8efff", color: "#2563eb", fontSize: "23px" }}>▰</span>
+            <span style={{ flex: 1, fontSize: "19px", fontWeight: 750 }}>Recent Projects</span>
+            <span aria-hidden="true" style={{ fontSize: "27px", color: "#1e40af" }}>→</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
 
 
   // -----------------------------------------------------------------------
